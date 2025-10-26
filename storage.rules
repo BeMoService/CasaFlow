@@ -1,0 +1,34 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.role == "admin"; }
+
+    function isOwner() {
+      return isSignedIn() && resource != null && resource.metadata.ownerId == request.auth.uid;
+    }
+    function isCreator() {
+      return isSignedIn() && request.resource != null && request.resource.metadata.ownerId == request.auth.uid;
+    }
+    function isPublic() {
+      return resource != null && resource.metadata.visibility == "public";
+    }
+
+    match /properties/{propertyId}/photos/{file} {
+      allow read: if isAdmin() || isOwner() || isPublic();
+      allow write: if isAdmin() || isCreator();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /generations/{propertyId}/{genId}/{file} {
+      allow read: if isAdmin() || isOwner() || isPublic();
+      allow write: if isAdmin() || isCreator();
+      allow delete: if isAdmin() || isOwner();
+    }
+
+    match /users/{uid}/avatars/{file} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid) || isPublic();
+      allow write, delete: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+    }
+  }
+}

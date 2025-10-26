@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    function tokenRole() {
+      return isSignedIn() && request.auth.token.role != null ? request.auth.token.role : null;
+    }
+
+    function docRole(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid)) &&
+             get(/databases/$(database)/documents/users/$(uid)).data.role;
+    }
+
+    function userRole() {
+      return tokenRole() != null ? tokenRole() : docRole(request.auth.uid);
+    }
+
+    function isAdmin() { return userRole() == "admin"; }
+    function isOwner(ownerId) { return isSignedIn() && request.auth.uid == ownerId; }
+
+    // users
+    match /users/{uid} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow delete: if isAdmin();
+    }
+
+    // properties
+    match /properties/{propId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
+    }
+
+    // leads
+    match /leads/{leadId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/properties/$(resource.data.propertyId))
+            && get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid);
+    }
+
+    // ai_generations
+    match /ai_generations/{genId} {
+      allow create: if isSignedIn()
+        && exists(/databases/$(database)/documents/properties/$(request.resource.data.propertyId))
+        && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.ownerId == request.auth.uid;
+
+      allow read, update, delete: if isAdmin()
+        || (isSignedIn()
+            && exists(/databases/$(database)/documents/properties/$(resource.data.propertyId))
+            && get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid);
+    }
+  }
+}
