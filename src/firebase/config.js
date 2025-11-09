@@ -12,24 +12,20 @@ const FIREBASE_CONFIG = {
   appId: "1:1038595537948:web:4e445227d6233bc019f3d9",
 };
 
-// ---- DEBUG LOG (alleen om te verifiëren wat live draait) ----
+// Debug-log om te verifiëren welke config live draait
 (function debugFirebaseConfigOnce() {
   const mask = (s) => (typeof s === "string" && s.length > 8 ? s.slice(0, 6) + "…" : s);
-  // Zet een flag zodat dit niet dubbel logt bij hot reload
   if (!window.__CF_DEBUG_CFG__) {
     window.__CF_DEBUG_CFG__ = true;
-    console.log("[CasaFlow] Firebase config",
-      {
-        apiKey: mask(FIREBASE_CONFIG.apiKey),
-        authDomain: FIREBASE_CONFIG.authDomain,
-        projectId: FIREBASE_CONFIG.projectId,
-        storageBucket: FIREBASE_CONFIG.storageBucket,
-        appId: mask(FIREBASE_CONFIG.appId),
-      }
-    );
+    console.log("[CasaFlow] Firebase config", {
+      apiKey: mask(FIREBASE_CONFIG.apiKey),
+      authDomain: FIREBASE_CONFIG.authDomain,
+      projectId: FIREBASE_CONFIG.projectId,
+      storageBucket: FIREBASE_CONFIG.storageBucket,
+      appId: mask(FIREBASE_CONFIG.appId),
+    });
   }
 })();
-// ------------------------------------------------------------
 
 for (const [k, v] of Object.entries(FIREBASE_CONFIG)) {
   if (!v || String(v).trim() === "") throw new Error(`Missing Firebase config: ${k}`);

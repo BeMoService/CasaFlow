@@ -1,8 +1,11 @@
-// src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App.jsx"; // <-- expliciet .jsx om resolutie-gedoe te vermijden
+
+// ⬇️ Forceer dat de firebase-config module altijd wordt uitgevoerd (met debug log)
+import "./firebase/config.js";
+
+import App from "./App.jsx"; // expliciet .jsx voorkomt resolver-gedoe
 import "./index.css";
 
 class ErrorBoundary extends React.Component {
