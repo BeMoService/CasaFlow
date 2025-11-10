@@ -1,7 +1,6 @@
 // src/app/AppShell.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import AuthControls from "../components/AuthControls.jsx";
 import { auth } from "../firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -11,7 +10,7 @@ export default function AppShell() {
   const [user, setUser] = useState(null);
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
-  // Simple breadcrumb uit de route
+  // Breadcrumbs
   const crumbs = useMemo(() => {
     const parts = loc.pathname.replace(/^\/crm\/?/, "").split("/").filter(Boolean);
     const first = "CasaFlow CRM";
@@ -19,20 +18,19 @@ export default function AppShell() {
     return [first, parts[0].charAt(0).toUpperCase() + parts[0].slice(1)];
   }, [loc.pathname]);
 
-  const linkClass = ({ isActive }) =>
-    `navlink-underline${isActive ? " active" : ""}`;
+  const linkClass = ({ isActive }) => `navlink-underline${isActive ? " active" : ""}`;
 
   return (
     <div className="app2-grid">
       {/* LEFT SIDEBAR */}
       <aside className="app2-left">
         <div className="left-top">
-          <div className="row" style={{ gap: 8, alignItems: "center" }}>
+          <div className="row" style={{ gap: 8, alignItems: "center", padding: "8px 12px" }}>
             <span className="badge">CRM</span>
             <span className="badge">Nexora</span>
           </div>
 
-          <div className="brand-mini">
+          <div className="brand-mini" style={{ padding: "0 12px" }}>
             <Link to="/dashboard">CasaFlow</Link>
           </div>
 
@@ -50,7 +48,7 @@ export default function AppShell() {
           </div>
         </div>
 
-        {/* ✅ SINGLE email, géén Logout hier */}
+        {/* footer: enkel e-mail (geen extra Logout) */}
         <div className="card panel-outline" style={{ margin: 16, borderRadius: 12, padding: 12 }}>
           <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Signed in</div>
           <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -59,13 +57,12 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* TOP BAR */}
+      {/* TOP BAR (géén AuthControls meer hier; Logout zit al in hoofdnav) */}
       <header className="app2-top">
         <div className="row">
           <button className="btn" onClick={() => nav("/dashboard")}>Back to App</button>
           <div className="row" style={{ marginLeft: "auto" }}>
             <button className="btn">New Lead</button>
-            <AuthControls />
           </div>
         </div>
       </header>
@@ -88,9 +85,8 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* CONTENT */}
+      {/* MAIN CONTENT */}
       <main className="app2-main">
-        {/* breadcrumbs */}
         <div className="breadcrumbs">
           {crumbs.map((c, i) => (
             <span key={i} className={i === crumbs.length - 1 ? "active" : ""}>
@@ -98,8 +94,6 @@ export default function AppShell() {
             </span>
           ))}
         </div>
-
-        {/* page outlet */}
         <Outlet />
       </main>
     </div>

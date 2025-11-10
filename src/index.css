@@ -330,4 +330,73 @@
     .h1 { font-size: 26px; }
     .h2 { font-size: 22px; }
   }
+/* ===== Nexora-style underline voor actieve pagina/sectietitels */
+.headline {
+  position: relative;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+  font-weight: 750;
+}
+.headline::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 2px; width: 84px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 2px;
+}
+
+/* Paneel met subtiele glow/outline (doet het element “uitsteken”) */
+.panel-outline {
+  border: 1px solid rgba(20,184,166,0.25);
+  box-shadow:
+    0 0 0 1px rgba(20,184,166,0.12) inset,
+    0 8px 24px rgba(0,0,0,0.35),
+    0 0 28px rgba(20,184,166,0.15);
+  border-radius: var(--r-md);
+}
+
+/* Media container (consistente 16:9 + object-fit) */
+.media {
+  background: #0c1116;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+}
+.media > img, .media > video, .media > picture {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #0c1116;
+}
+/* ===== CasaFlow CRM layout (Nexora L2) ===== */
+.app2-grid{display:grid;grid-template-columns:260px 1fr 320px;gap:16px;align-items:start}
+.app2-left{position:sticky;top:64px;height:calc(100vh - 80px)}
+.app2-top{grid-column:2/4;margin-bottom:8px}
+.app2-right{position:sticky;top:64px}
+.app2-main{grid-column:2/4}
+
+/* breadcrumbs + links */
+.breadcrumbs{color:var(--muted);margin:8px 0 14px;user-select:none}
+.breadcrumbs .active{color:var(--text)}
+
+.left-top .brand-mini a{font-weight:800;text-decoration:none;color:var(--text)}
+.left-nav{margin-top:6px}
+.navlink-underline{display:block;padding:10px 14px;border-radius:12px;border:1px solid var(--border);margin:4px 12px;color:var(--text);text-decoration:none;opacity:.95}
+.navlink-underline.active{border-color:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(0,0,0,.3);opacity:1}
+
+/* media/skeleton helpers (safe if already present) */
+.media{width:100%;height:200px;overflow:hidden;background:rgba(255,255,255,0.03)}
+.media img{width:100%;height:100%;object-fit:cover;display:block}
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.02),rgba(255,255,255,.06));animation:sheen 1.4s linear infinite}
+@keyframes sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* Responsive */
+@media (max-width: 1100px){
+  .app2-grid{grid-template-columns:1fr}
+  .app2-left,.app2-right{position:static;top:auto;height:auto}
+  .app2-top,.app2-main{grid-column:auto}
+}
   
