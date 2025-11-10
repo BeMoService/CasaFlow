@@ -1,9 +1,9 @@
 // src/pages/Admin.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase/config";
+import { db, storage } from "../firebase/config";
 import { collection, onSnapshot, doc, updateDoc, getDoc } from "firebase/firestore";
-import { getStorage, getDownloadURL, ref } from "firebase/storage";
+import { getDownloadURL, ref } from "firebase/storage";
 
 /* Badge (klein chipje) */
 function Badge({ children }) {
@@ -22,7 +22,7 @@ function Badge({ children }) {
   );
 }
 
-/* Inline image loader (geen extra bestand nodig)
+/* Inline image loader (géén extra bestand)
    - Accepteert https://, gs:// of storage-paden
    - Toont skeleton tot URL resolved is
 */
@@ -38,10 +38,10 @@ function InlineImage({ src, alt = "AI output" }) {
       // Al een http(s) URL? direct tonen
       if (/^https?:\/\//i.test(str)) { setUrl(str); return; }
 
-      // gs://bucket/path of een relatief storage pad → getDownloadURL
+      // gs://bucket/path of relatieve storage path → getDownloadURL
       try {
-        const clean = str.replace(/^gs:\/\/[^/]+\//, ""); // strip bucket
-        const r = ref(getStorage(), clean);
+        const clean = str.replace(/^gs:\/\/[^/]+\//, ""); // strip bucket als nodig
+        const r = ref(storage, clean);
         const dl = await getDownloadURL(r);
         if (active) setUrl(dl);
       } catch (e) {
@@ -168,8 +168,10 @@ export default function Admin() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16, marginTop: 8 }}>
           {filtered.map((g) => {
-            const thumb =
-              (Array.isArray(g.outputs) && (g.outputs[0]?.url || g.outputs[0])) ||
+            // Robuuste selectie van een mogelijke thumbnail-waarde
+            const thumbCandidate =
+              (Array.isArray(g.outputs) && (g.outputs[0]?.downloadURL || g.outputs[0]?.url || g.outputs[0])) ||
+              g.downloadURL ||
               g.outputUrl ||
               g.output ||
               g.storagePath ||
@@ -187,7 +189,7 @@ export default function Admin() {
                 }}
               >
                 {/* MEDIA */}
-                <InlineImage src={thumb} alt="AI output" />
+                <InlineImage src={thumbCandidate} alt="AI output" />
 
                 {/* META */}
                 <div style={{ padding: 12, display: "grid", gap: 8 }}>
