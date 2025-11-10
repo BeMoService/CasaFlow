@@ -1,6 +1,7 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router-dom";
+
 import Dashboard from "./pages/Dashboard";
 import UploadProperty from "./pages/UploadProperty";
 import PropertyView from "./pages/PropertyView";
@@ -8,11 +9,12 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import PublicProperty from "./pages/PublicProperty";
 import RequireAuth from "./components/RequireAuth";
-import { auth } from "./firebase/config";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 import DebugStorage from "./pages/DebugStorage";
 
-/* ===== CRM layer ===== */
+import { auth } from "./firebase/config";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
+/* ===== CRM layer (Nexora-style) ===== */
 import AppShell from "./app/AppShell.jsx";
 import { CrmProvider } from "./app/state/crmStore.js";
 import CrmOverview from "./app/crm/Overview.jsx";
@@ -84,9 +86,8 @@ function Nav() {
       <nav style={{ display: "flex", gap: 8, alignItems: "center" }}>
         {item("/dashboard", "Dashboard")}
         {item("/upload", "Upload")}
-        {/* Leads UIT hoofdmenu verwijderd */}
         {item("/admin", "Admin")}
-        {item("/crm", "CRM")} {/* Nieuw: link naar CRM shell */}
+        {item("/crm", "CRM")}      {/* <-- CRM zichtbaar in topnav */}
         {item("/debug", "Debug")}
         {!user ? (
           item("/login", "Login")
@@ -110,18 +111,28 @@ export default function App() {
       <Nav />
       <main style={{ padding: 16 }}>
         <Routes>
-          <Route path="/" element={<RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>} />
+          {/* Root redirect */}
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <Navigate to="/dashboard" replace />
+              </RequireAuth>
+            }
+          />
 
-          {/* bestaande app */}
+          {/* Hoofdapp */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
           <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
           <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-          <Route path="/debug" element={<DebugStorage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/p/:id" element={<PublicProperty />} />
 
-          {/* ===== CRM routes met shell + provider ===== */}
+          {/* Public pages */}
+          <Route path="/p/:id" element={<PublicProperty />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/debug" element={<DebugStorage />} />
+
+          {/* ===== CRM met shell + provider (alle subpages) ===== */}
           <Route
             path="/crm/*"
             element={
