@@ -1,8 +1,9 @@
 // src/pages/Admin.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../firebase/config";
+import { db, auth, storage } from "../firebase/config";
 import { collection, onSnapshot, doc, updateDoc, getDoc, query, where } from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
 
 function Badge({ children }) {
   return (
@@ -20,6 +21,63 @@ function Badge({ children }) {
   );
 }
 
+/** Kleine inline image loader (dezelfde aanpak als Dashboard):
+ * - accepteert https://, gs://, of Storage paths (fullPath/path)
+ * - toont skeleton tijdens load, nette fallback bij fout
+ */
+function InlineImage({ src, alt = "AI output", height = 180 }) {
+  const [state, setState] = useState({ url: null, error: false });
+
+  useEffect(() => {
+    let active = true;
+
+    async function resolve() {
+      try {
+        if (!src) { if (active) setState({ url: null, error: true }); return; }
+        const s = String(src);
+
+        if (/^https?:\/\//i.test(s)) { // directe URL
+          if (active) setState({ url: s, error: false });
+          return;
+        }
+
+        // gs://bucket/path of relatieve storage path
+        const clean = s.replace(/^gs:\/\/[^/]+\//, "");
+        const r = ref(storage, clean);
+        const dl = await getDownloadURL(r);
+        if (active) setState({ url: dl, error: false });
+      } catch (e) {
+        console.error("Admin InlineImage failed:", src, e);
+        if (active) setState({ url: null, error: true });
+      }
+    }
+
+    setState({ url: null, error: false });
+    resolve();
+    return () => { active = false; };
+  }, [src]);
+
+  if (!state.url && !state.error) {
+    return <div className="media skeleton" style={{ height }} aria-label="loading image" />;
+  }
+  if (state.error) {
+    return (
+      <div
+        className="media"
+        style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}
+      >
+        No preview
+      </div>
+    );
+  }
+  return (
+    <div className="media" style={{ height, overflow: "hidden" }}>
+      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+      <img src={state.url} alt={alt} loading="lazy" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}/>
+    </div>
+  );
+}
+
 export default function Admin() {
   const navigate = useNavigate();
   const [gens, setGens] = useState([]);
@@ -27,7 +85,7 @@ export default function Admin() {
   const [busyId, setBusyId] = useState(null);
   const [q, setQ] = useState("");
 
-  // ✅ ENIGE WIJZIGING: filter ai_generations op ownerId == currentUser.uid
+  // Filter ai_generations op ownerId == currentUser.uid
   useEffect(() => {
     let stopAuth = () => {};
     let unsub = () => {};
@@ -143,7 +201,10 @@ export default function Admin() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16, marginTop: 8 }}>
           {filtered.map((g) => {
-            const thumb = (Array.isArray(g.outputs) && (g.outputs[0]?.url || g.outputs[0])) || "";
+            const first = Array.isArray(g.outputs) && g.outputs.length ? g.outputs[0] : null;
+            const src =
+              (typeof first === "string" ? first : (first?.url || first?.downloadURL || first?.href || first?.src || first?.fullPath || first?.path || ""));
+
             return (
               <div
                 key={g.id}
@@ -156,15 +217,8 @@ export default function Admin() {
                   flexDirection: "column",
                 }}
               >
-                <div style={{ width: "100%", height: 180, background: "#111", overflow: "hidden" }}>
-                  {thumb ? (
-                    <img src={thumb} alt="AI output" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, opacity: 0.65 }}>
-                      No preview
-                    </div>
-                  )}
-                </div>
+                {/* ✅ Thumbnail met gs:// → https resolver */}
+                <InlineImage src={src} alt="AI output" height={180} />
 
                 <div style={{ padding: 12, display: "grid", gap: 8 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
