@@ -1,153 +1,107 @@
 // src/app/AppShell.jsx
-import React, { useMemo, useState, useEffect } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import AuthControls from "../components/AuthControls.jsx";
-import { useCrm } from "./state/crmStore.js";
-import { auth } from "../firebase/config.js";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import AuthControls from "../../components/AuthControls.jsx";
+import { auth } from "../firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 
-/**
- * CRM App Shell (Nexora-style)
- * - Alleen styling aangepast; logica intact.
- * - Auth: direct via Firebase (geen AuthProvider nodig).
- */
-
 export default function AppShell() {
-  const nav = useNavigate();
   const loc = useLocation();
-  const { counts } = useCrm(); // { leads, contacts, deals, inbox, tasks }
-
+  const nav = useNavigate();
   const [user, setUser] = useState(null);
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
-  // breadcrumbs
+  // Simple breadcrumb uit de route
   const crumbs = useMemo(() => {
-    const parts = loc.pathname.replace(/^\/+/, "").split("/");
-    const acc = [];
-    let path = "";
-    for (const p of parts) {
-      path += `/${p}`;
-      acc.push({ label: toTitle(p), path });
-    }
-    return acc;
+    const parts = loc.pathname.replace(/^\/crm\/?/, "").split("/").filter(Boolean);
+    const first = "CasaFlow CRM";
+    if (parts.length === 0) return [first, "Overview"];
+    return [first, parts[0].charAt(0).toUpperCase() + parts[0].slice(1)];
   }, [loc.pathname]);
 
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const linkClass = ({ isActive }) =>
+    `navlink-underline${isActive ? " active" : ""}`;
 
   return (
-    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50 }}
-        />
-      )}
+    <div className="app2-grid">
+      {/* LEFT SIDEBAR */}
+      <aside className="app2-left">
+        <div className="left-top">
+          <div className="row" style={{ gap: 8, alignItems: "center" }}>
+            <span className="badge">CRM</span>
+            <span className="badge">Nexora</span>
+          </div>
 
-      {/* Primary Sidebar */}
-      <aside
-        className="sidebar"
-        style={{ height: "100%", position: "relative", zIndex: 55, display: mobileOpen ? "block" : undefined }}
-      >
-        <div className="section" style={{ paddingTop: 18, paddingBottom: 10 }}>
-          <div className="row" style={{ justifyContent: "space-between" }}>
-            <div className="row" style={{ gap: 10 }}>
-              <div className="badge info" title="CasaFlow CRM" style={{ fontWeight: 600 }}>CRM</div>
-              <div className="badge" title="Powered by Nexora">
-                <span style={{ width: 8, height: 8, borderRadius: 99, background: "var(--primary)" }} />
-                Nexora
-              </div>
-            </div>
-            <button className="btn btn-ghost" onClick={() => setMobileOpen(false)} style={{ display: "none" }} aria-label="Close menu">✕</button>
+          <div className="brand-mini">
+            <Link to="/dashboard">CasaFlow</Link>
+          </div>
+
+          <div className="left-nav">
+            <div className="muted" style={{ padding: "12px 14px" }}>Main</div>
+            <NavLink to="/crm/overview" className={linkClass}>Overview</NavLink>
+            <NavLink to="/crm/leads" className={linkClass}>Leads</NavLink>
+            <NavLink to="/crm/contacts" className={linkClass}>Contacts</NavLink>
+            <NavLink to="/crm/deals" className={linkClass}>Deals</NavLink>
+            <NavLink to="/crm/inbox" className={linkClass}>Inbox</NavLink>
+            <NavLink to="/crm/tasks" className={linkClass}>Tasks</NavLink>
+            <NavLink to="/crm/automations" className={linkClass}>Automations</NavLink>
+            <NavLink to="/crm/templates" className={linkClass}>Templates</NavLink>
+            <NavLink to="/crm/settings" className={linkClass}>Settings</NavLink>
           </div>
         </div>
 
-        <nav className="section" aria-label="Main">
-          <div className="heading">Main</div>
-          <NavItem to="/crm/overview" label="Overview" />
-          <NavItem to="/crm/leads" label="Leads" count={counts?.leads} />
-          <NavItem to="/crm/contacts" label="Contacts" count={counts?.contacts} />
-          <NavItem to="/crm/deals" label="Deals" count={counts?.deals} />
-          <NavItem to="/crm/inbox" label="Inbox" count={counts?.inbox} />
-          <NavItem to="/crm/tasks" label="Tasks" count={counts?.tasks} />
-          <NavItem to="/crm/automations" label="Automations" />
-          <NavItem to="/crm/templates" label="Templates" />
-          <NavItem to="/crm/settings" label="Settings" />
-        </nav>
-
-        <div className="section" style={{ marginTop: "auto" }}>
-          <div className="card" style={{ padding: 12 }}>
-            <div className="label">Signed in</div>
-            <div style={{ fontSize: "var(--fs-sm)" }}>{user?.email ?? "—"}</div>
-            <div style={{ marginTop: 10 }}>
-              <AuthControls compact />
-            </div>
+        {/* ✅ SINGLE email, géén Logout hier */}
+        <div className="card panel-outline" style={{ margin: 16, borderRadius: 12, padding: 12 }}>
+          <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Signed in</div>
+          <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {user?.email || "-"}
           </div>
-          <div style={{ height: 12 }} />
         </div>
       </aside>
 
-      {/* Main */}
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-        <div className="topbar">
-          <div className="between">
-            <div className="row">
-              <button className="btn btn-ghost" onClick={() => setMobileOpen((v) => !v)} aria-label="Toggle menu" style={{ display: "none" }}>
-                ☰
-              </button>
-              <div className="breadcrumbs">
-                <NavLink to="/crm/overview" className="navlink-underline">CasaFlow CRM</NavLink>
-                {crumbs.slice(1).map((c) => (
-                  <React.Fragment key={c.path}>
-                    <span className="sep">/</span>
-                    <NavLink to={c.path} className="navlink-underline">{c.label}</NavLink>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-
-            <div className="row">
-              <NavLink to="/dashboard" className="btn">Back to App</NavLink>
-              <button className="btn btn-primary" onClick={() => nav("/crm/leads")}>New Lead</button>
-            </div>
+      {/* TOP BAR */}
+      <header className="app2-top">
+        <div className="row">
+          <button className="btn" onClick={() => nav("/dashboard")}>Back to App</button>
+          <div className="row" style={{ marginLeft: "auto" }}>
+            <button className="btn">New Lead</button>
+            <AuthControls />
           </div>
         </div>
+      </header>
 
-        <main className="content-wrap">
-          <Outlet />
-        </main>
-      </div>
-
-      {/* Secondary */}
-      <aside className="sidebar-2">
-        <div className="h3" style={{ marginBottom: 8 }}>Context</div>
-        <div className="muted" style={{ marginBottom: 12 }}>Quick actions & filters</div>
-        <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
-          <button className="btn">Filter</button>
-          <button className="btn">Export</button>
-          <button className="btn">Share</button>
-        </div>
-        <div style={{ height: 16 }} />
-        <div className="card">
-          <div className="label">Status</div>
-          <div style={{ marginTop: 8 }} className="row">
-            <span className="badge ok">Operational</span>
+      {/* RIGHT CONTEXT SIDEBAR */}
+      <aside className="app2-right">
+        <div className="panel-outline card" style={{ borderRadius: 12 }}>
+          <h3 style={{ marginTop: 0 }}>Context</h3>
+          <div className="muted">Quick actions & filters</div>
+          <div className="row" style={{ marginTop: 8 }}>
+            <button className="btn">Filter</button>
+            <button className="btn">Export</button>
+            <button className="btn">Share</button>
+          </div>
+          <div className="muted" style={{ marginTop: 16 }}>Status</div>
+          <div className="row" style={{ marginTop: 6 }}>
+            <span className="badge">Operational</span>
             <span className="badge">EU-West</span>
           </div>
         </div>
       </aside>
+
+      {/* CONTENT */}
+      <main className="app2-main">
+        {/* breadcrumbs */}
+        <div className="breadcrumbs">
+          {crumbs.map((c, i) => (
+            <span key={i} className={i === crumbs.length - 1 ? "active" : ""}>
+              {c}{i < crumbs.length - 1 ? " / " : ""}
+            </span>
+          ))}
+        </div>
+
+        {/* page outlet */}
+        <Outlet />
+      </main>
     </div>
   );
-}
-
-function NavItem({ to, label, count }) {
-  return (
-    <NavLink to={to} className={({ isActive }) => "item" + (isActive ? " active" : "")}>
-      <span>{label}</span>
-      {typeof count === "number" ? <span className="badge">{count}</span> : null}
-    </NavLink>
-  );
-}
-
-function toTitle(s) {
-  return s.replace(/^\//, "").split("-").map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
 }

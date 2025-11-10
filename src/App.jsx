@@ -45,7 +45,6 @@ function Nav() {
           opacity: active ? 1 : 0.9,
           border: active ? "1px solid rgba(255,255,255,0.14)" : "1px solid transparent",
         }}
-        className="navlink-underline"
       >
         {label}
       </Link>
@@ -73,7 +72,8 @@ function Nav() {
         {item("/admin", "Admin")}
         {item("/crm", "CRM")}
         {!user ? item("/login", "Login") : (
-          <button onClick={doLogout} className="btn" style={{ padding:"8px 12px", borderRadius:10, fontWeight:600 }}>
+          <button onClick={doLogout} className="button-secondary"
+                  style={{ padding:"8px 12px", borderRadius:10, fontWeight:600 }}>
             Logout
           </button>
         )}
@@ -89,13 +89,11 @@ export default function App() {
       <main style={{ padding: 16 }}>
         <Routes>
           <Route path="/" element={<RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>} />
-
           {/* hoofdapp */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
           <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
           <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
@@ -112,6 +110,7 @@ export default function App() {
             }
           >
             <Route index element={<CrmOverview />} />
+            <Route path="overview" element={<CrmOverview />} /> {/* ✅ expliciete route */}
             <Route path="leads" element={<CrmLeads />} />
             <Route path="contacts" element={<CrmContacts />} />
             <Route path="deals" element={<CrmDeals />} />
