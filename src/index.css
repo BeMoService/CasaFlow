@@ -473,3 +473,9 @@
   .app2-left{ position:static; transform:none; opacity:1; width:auto; max-width:none; }
   .app2-toggle{ display:none !important; }
 }
+/* Hard reset: CRM sidebar altijd statisch */
+.app2-root .card.panel-outline { /* alleen visuele kaartstijl; geen pos overrides */ }
+.app2-left, .app2-toggle { display: none; } /* mocht nog bestaan in CSS, disable */
+@media (min-width:0){
+  .app2-left{ position: static !important; transform: none !important; opacity: 1 !important; width: auto !important; max-width: none !important; }
+}
