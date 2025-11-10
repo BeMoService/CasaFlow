@@ -9,7 +9,6 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import PublicProperty from "./pages/PublicProperty";
 import RequireAuth from "./components/RequireAuth";
-import DebugStorage from "./pages/DebugStorage";
 
 import { auth } from "./firebase/config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
