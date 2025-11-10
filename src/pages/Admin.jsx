@@ -22,42 +22,100 @@ function Badge({ children }) {
   );
 }
 
+/* -------- Helpers -------- */
+
+// Haal een “best guess” pad of url uit een generation-record (object of string)
+function pickThumbSource(g) {
+  // 1) Als outputs bestaat, probeer eerste bruikbare waarde uit object of string
+  const first =
+    Array.isArray(g?.outputs) && g.outputs.length > 0 ? g.outputs[0] : null;
+
+  const fromObj = (o) => {
+    if (!o || typeof o !== "object") return null;
+    // voorkeursvolgorde aan mogelijke keys:
+    return (
+      o.downloadURL ||
+      o.url ||
+      o.href ||
+      o.src ||
+      o.path ||
+      o.storagePath ||
+      o.fullPath ||
+      o.name || // soms hele naam met pad
+      null
+    );
+  };
+
+  const candidate =
+    (typeof first === "string" ? first : fromObj(first)) ||
+    g?.downloadURL ||
+    g?.outputUrl ||
+    g?.output ||
+    g?.storagePath ||
+    g?.fullPath ||
+    g?.path ||
+    "";
+
+  return candidate;
+}
+
 /* Inline image loader (géén extra bestand)
-   - Accepteert https://, gs:// of storage-paden
-   - Toont skeleton tot URL resolved is
+   - accepteert https://, gs:// of storage-paden
+   - toont skeleton → of “No preview” bij fout
 */
 function InlineImage({ src, alt = "AI output" }) {
-  const [url, setUrl] = useState(null);
+  const [state, setState] = useState({ url: null, error: false });
 
   useEffect(() => {
     let active = true;
-    async function run() {
-      if (!src) { setUrl(null); return; }
-      const str = String(src);
 
-      // Al een http(s) URL? direct tonen
-      if (/^https?:\/\//i.test(str)) { setUrl(str); return; }
-
-      // gs://bucket/path of relatieve storage path → getDownloadURL
+    async function resolve() {
       try {
-        const clean = str.replace(/^gs:\/\/[^/]+\//, ""); // strip bucket als nodig
+        if (!src) { if (active) setState({ url: null, error: true }); return; }
+
+        const str = String(src);
+
+        // https → direct
+        if (/^https?:\/\//i.test(str)) {
+          if (active) setState({ url: str, error: false });
+          return;
+        }
+
+        // gs://bucket/path of relatieve storage path
+        const clean = str.replace(/^gs:\/\/[^/]+\//, ""); // strip bucket als aanwezig
         const r = ref(storage, clean);
         const dl = await getDownloadURL(r);
-        if (active) setUrl(dl);
+        if (active) setState({ url: dl, error: false });
       } catch (e) {
-        console.error("InlineImage: failed to resolve", str, e);
-        if (active) setUrl(null);
+        console.error("InlineImage: failed to resolve", src, e);
+        if (active) setState({ url: null, error: true });
       }
     }
-    run();
+
+    setState({ url: null, error: false }); // reset tussen items
+    resolve();
     return () => { active = false; };
   }, [src]);
 
-  if (!url) return <div className="media skeleton" aria-label="loading image" />;
+  if (!state.url && !state.error) return <div className="media skeleton" aria-label="loading image" />;
+
+  if (state.error) {
+    return (
+      <div className="media" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
+        No preview
+      </div>
+    );
+  }
+
   return (
     <div className="media">
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <img src={url} alt={alt} loading="lazy" />
+      <img
+        src={state.url}
+        alt={alt}
+        loading="lazy"
+        onError={() => setState({ url: null, error: true })}
+      />
     </div>
   );
 }
@@ -168,14 +226,7 @@ export default function Admin() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16, marginTop: 8 }}>
           {filtered.map((g) => {
-            // Robuuste selectie van een mogelijke thumbnail-waarde
-            const thumbCandidate =
-              (Array.isArray(g.outputs) && (g.outputs[0]?.downloadURL || g.outputs[0]?.url || g.outputs[0])) ||
-              g.downloadURL ||
-              g.outputUrl ||
-              g.output ||
-              g.storagePath ||
-              "";
+            const thumbCandidate = pickThumbSource(g);
 
             return (
               <div
