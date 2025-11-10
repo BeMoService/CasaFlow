@@ -33,18 +33,12 @@ function Nav() {
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
-    const active = loc.pathname.startsWith(to);
+    const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
     return (
       <Link
         to={to}
-        style={{
-          padding: "8px 12px",
-          borderRadius: 10,
-          fontWeight: 600,
-          textDecoration: "none",
-          opacity: active ? 1 : 0.9,
-          border: active ? "1px solid rgba(255,255,255,0.14)" : "1px solid transparent",
-        }}
+        className={active ? "navlink-underline active" : "navlink-underline"}
+        style={{ fontWeight: 600 }}
       >
         {label}
       </Link>
@@ -110,7 +104,6 @@ export default function App() {
             }
           >
             <Route index element={<CrmOverview />} />
-            <Route path="overview" element={<CrmOverview />} /> {/* ✅ expliciete route */}
             <Route path="leads" element={<CrmLeads />} />
             <Route path="contacts" element={<CrmContacts />} />
             <Route path="deals" element={<CrmDeals />} />

@@ -1,101 +1,96 @@
 // src/app/AppShell.jsx
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { auth } from "../firebase/config";
-import { onAuthStateChanged } from "firebase/auth";
+import React from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import AuthControls from "../../components/AuthControls.jsx";
+import { useCrm } from "./state/crmStore.js";
 
 export default function AppShell() {
-  const loc = useLocation();
-  const nav = useNavigate();
-  const [user, setUser] = useState(null);
-  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+  const { pathname } = useLocation();
+  const { counts } = useCrm(); // verwacht vanuit jouw crmStore.js (mock counts)
 
-  // Breadcrumbs
-  const crumbs = useMemo(() => {
-    const parts = loc.pathname.replace(/^\/crm\/?/, "").split("/").filter(Boolean);
-    const first = "CasaFlow CRM";
-    if (parts.length === 0) return [first, "Overview"];
-    return [first, parts[0].charAt(0).toUpperCase() + parts[0].slice(1)];
-  }, [loc.pathname]);
+  // mobile drawer toggle (nieuw), desktop blijft altijd zichtbaar
+  const [leftOpen, setLeftOpen] = React.useState(false);
 
-  const linkClass = ({ isActive }) => `navlink-underline${isActive ? " active" : ""}`;
+  const LinkItem = ({ to, label, badge }) => (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        "navlink-underline" + (isActive ? " active" : "")
+      }
+      style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+      onClick={() => setLeftOpen(false)} // sluiten op mobile na klik
+    >
+      <span>{label}</span>
+      {typeof badge === "number" ? (
+        <span className="badge" style={{ marginLeft: 10 }}>{badge}</span>
+      ) : null}
+    </NavLink>
+  );
 
   return (
-    <div className="app2-grid">
-      {/* LEFT SIDEBAR */}
-      <aside className="app2-left">
-        <div className="left-top">
-          <div className="row" style={{ gap: 8, alignItems: "center", padding: "8px 12px" }}>
-            <span className="badge">CRM</span>
-            <span className="badge">Nexora</span>
-          </div>
-
-          <div className="brand-mini" style={{ padding: "0 12px" }}>
-            <Link to="/dashboard">CasaFlow</Link>
-          </div>
-
-          <div className="left-nav">
-            <div className="muted" style={{ padding: "12px 14px" }}>Main</div>
-            <NavLink to="/crm/overview" className={linkClass}>Overview</NavLink>
-            <NavLink to="/crm/leads" className={linkClass}>Leads</NavLink>
-            <NavLink to="/crm/contacts" className={linkClass}>Contacts</NavLink>
-            <NavLink to="/crm/deals" className={linkClass}>Deals</NavLink>
-            <NavLink to="/crm/inbox" className={linkClass}>Inbox</NavLink>
-            <NavLink to="/crm/tasks" className={linkClass}>Tasks</NavLink>
-            <NavLink to="/crm/automations" className={linkClass}>Automations</NavLink>
-            <NavLink to="/crm/templates" className={linkClass}>Templates</NavLink>
-            <NavLink to="/crm/settings" className={linkClass}>Settings</NavLink>
-          </div>
-        </div>
-
-        {/* footer: enkel e-mail (geen extra Logout) */}
-        <div className="card panel-outline" style={{ margin: 16, borderRadius: 12, padding: 12 }}>
-          <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>Signed in</div>
-          <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {user?.email || "-"}
-          </div>
-        </div>
-      </aside>
-
-      {/* TOP BAR (géén AuthControls meer hier; Logout zit al in hoofdnav) */}
-      <header className="app2-top">
-        <div className="row">
-          <button className="btn" onClick={() => nav("/dashboard")}>Back to App</button>
-          <div className="row" style={{ marginLeft: "auto" }}>
-            <button className="btn">New Lead</button>
-          </div>
-        </div>
-      </header>
-
-      {/* RIGHT CONTEXT SIDEBAR */}
-      <aside className="app2-right">
-        <div className="panel-outline card" style={{ borderRadius: 12 }}>
-          <h3 style={{ marginTop: 0 }}>Context</h3>
-          <div className="muted">Quick actions & filters</div>
-          <div className="row" style={{ marginTop: 8 }}>
-            <button className="btn">Filter</button>
-            <button className="btn">Export</button>
-            <button className="btn">Share</button>
-          </div>
-          <div className="muted" style={{ marginTop: 16 }}>Status</div>
-          <div className="row" style={{ marginTop: 6 }}>
-            <span className="badge">Operational</span>
-            <span className="badge">EU-West</span>
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT */}
-      <main className="app2-main">
-        <div className="breadcrumbs">
-          {crumbs.map((c, i) => (
-            <span key={i} className={i === crumbs.length - 1 ? "active" : ""}>
-              {c}{i < crumbs.length - 1 ? " / " : ""}
+    <div className="app2-root" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
+      {/* Topbar */}
+      <div className="app2-top" style={{
+        gridColumn: "1 / -1",
+        position: "sticky",
+        top: 0,
+        zIndex: 12,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "12px 16px",
+        background: "rgba(0,0,0,0.55)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 12,
+        backdropFilter: "blur(8px)"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* mobile toggle */}
+          <button
+            className="btn"
+            onClick={() => setLeftOpen(v => !v)}
+            style={{ display: "none", padding: "8px 10px", borderRadius: 10 }}
+          >
+            ☰
+          </button>
+          <div style={{ fontWeight: 800 }}>
+            CRM
+            <span className="muted" style={{ marginLeft: 8, fontWeight: 500 }}>
+              / {pathname.replace(/^\/crm\/?/, "") || "overview"}
             </span>
-          ))}
+          </div>
         </div>
+
+        {/* Rechtsboven: AuthControls (email + logout) */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <AuthControls />
+        </div>
+      </div>
+
+      {/* Left sidebar */}
+      <aside className={`app2-left card ${leftOpen ? "left-open" : ""}`} style={{ padding: 12 }}>
+        <div className="panel-outline" style={{ padding: 8, borderRadius: 12, marginBottom: 10 }}>
+          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>CasaFlow CRM</div>
+          <div style={{ fontWeight: 700 }}>Navigation</div>
+        </div>
+
+        <div style={{ display: "grid", gap: 6 }}>
+          <LinkItem to="/crm" label="Overview" />
+          <LinkItem to="/crm/leads" label="Leads" badge={counts?.leads ?? 0} />
+          <LinkItem to="/crm/contacts" label="Contacts" badge={counts?.contacts ?? 0} />
+          <LinkItem to="/crm/deals" label="Deals" badge={counts?.deals ?? 0} />
+          <LinkItem to="/crm/inbox" label="Inbox" badge={counts?.inbox ?? 0} />
+          <LinkItem to="/crm/tasks" label="Tasks" badge={counts?.tasks ?? 0} />
+          <LinkItem to="/crm/automations" label="Automations" />
+          <LinkItem to="/crm/templates" label="Templates" />
+          <LinkItem to="/crm/settings" label="Settings" />
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <section className="card panel-outline" style={{ padding: 12, minHeight: 480 }}>
         <Outlet />
-      </main>
+      </section>
     </div>
   );
 }
