@@ -56,12 +56,12 @@ export default function Dashboard() {
             cursor: "pointer",
           }}
         >
-          + Nieuwe property
+          + New property
         </button>
       </div>
 
       {loading ? (
-        <div style={{ marginTop: 16, opacity: 0.85 }}>Laden…</div>
+        <div style={{ marginTop: 16, opacity: 0.85 }}>Loading…</div>
       ) : sorted.length === 0 ? (
         <div style={{ marginTop: 24 }}>
           <div
@@ -72,16 +72,16 @@ export default function Dashboard() {
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <h3 style={{ margin: 0, marginBottom: 8 }}>Nog geen properties</h3>
+            <h3 style={{ margin: 0, marginBottom: 8 }}>No properties yet</h3>
             <p style={{ marginTop: 0, opacity: 0.85 }}>
-              Klik op <b>Nieuwe property</b> om te starten met uploaden.
+              Click <b>New property</b> to start uploading.
             </p>
             <button
               onClick={() => navigate("/upload")}
               className="button"
               style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 600 }}
             >
-              Property uploaden
+              Upload property
             </button>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function Dashboard() {
                           opacity: 0.65,
                         }}
                       >
-                        Geen afbeelding
+                        No image
                       </div>
                     )}
                   </div>
@@ -153,10 +153,10 @@ export default function Dashboard() {
                     style={{ cursor: "pointer" }}
                   >
                     <div style={{ fontWeight: 700 }}>
-                      {p.title || "Zonder titel"}
+                      {p.title || "Untitled"}
                     </div>
                     <div style={{ fontSize: 12, opacity: 0.8 }}>
-                      {p.location || "Onbekende locatie"}
+                      {p.location || "Unknown location"}
                     </div>
                   </div>
 
@@ -170,10 +170,10 @@ export default function Dashboard() {
                         opacity: 0.9,
                       }}
                     >
-                      {p.status || "onbekend"}
+                      {p.status || "unknown"}
                     </span>
                     <span style={{ fontSize: 12, opacity: 0.8 }}>
-                      {photoCount} foto{photoCount === 1 ? "" : "’s"}
+                      {photoCount} {photoCount === 1 ? "photo" : "photos"}
                     </span>
                   </div>
 
@@ -188,7 +188,7 @@ export default function Dashboard() {
                         cursor: "pointer",
                       }}
                     >
-                      Openen
+                      Open
                     </button>
                     <button
                       onClick={() => navigate(`/property/${p.id}`)}

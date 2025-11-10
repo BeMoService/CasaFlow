@@ -1,14 +1,48 @@
 // src/pages/UploadProperty.jsx
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, storage, auth } from "../firebase/config";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  updateDoc,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, auth } from "../firebase/config";
+import { collection, addDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+
+// Cloud Function base (HTTP) to bypass CORS on direct Storage uploads
+const FUNCTION_BASE = "https://europe-west1-velvetframedb.cloudfunctions.net";
+
+// Upload a single file via Cloud Function (server-side write to Storage)
+async function uploadViaFunction(propertyId, file) {
+  // file -> base64 (strip data: prefix)
+  const toBase64 = (f) =>
+    new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(",")[1] || "");
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
+
+  const base64 = await toBase64(file);
+  const resp = await fetch(`${FUNCTION_BASE}/uploadPropertyPhoto`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      propertyId,
+      fileName: file.name,
+      contentType: file.type || "application/octet-stream",
+      base64,
+    }),
+  });
+
+  if (!resp.ok) throw new Error(`uploadPropertyPhoto failed: HTTP ${resp.status}`);
+  const data = await resp.json();
+  if (!data?.ok) throw new Error(data?.error || "uploadPropertyPhoto error");
+
+  return {
+    name: file.name,
+    path: data.path,
+    url: data.downloadURL,
+    size: file.size,
+    type: file.type,
+    uploadedAt: new Date().toISOString(),
+  };
+}
 
 export default function UploadProperty() {
   const navigate = useNavigate();
@@ -18,6 +52,7 @@ export default function UploadProperty() {
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [progressText, setProgressText] = useState("");
+  const [percent, setPercent] = useState(0);
 
   const previews = useMemo(() => {
     return Array.from(files || []).map((file) => ({
@@ -34,37 +69,26 @@ export default function UploadProperty() {
     setFiles(list);
   }
 
-  function safeName(name) {
-    // Eenvoudige normalisatie van bestandsnaam
-    const base = name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9._-]/g, "");
-    const rid =
-      (window?.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
-      `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    const dot = base.lastIndexOf(".");
-    if (dot === -1) return `${base}_${rid}`;
-    const stem = base.slice(0, dot);
-    const ext = base.slice(dot);
-    return `${stem}_${rid}${ext}`;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
+
     if (!title.trim() || !location.trim()) {
-      alert("Vul a.u.b. titel en locatie in.");
+      alert("Please fill in title and location.");
       return;
     }
     if (!files || files.length === 0) {
-      alert("Selecteer minimaal één foto.");
+      alert("Select at least one photo.");
       return;
     }
 
     setSubmitting(true);
-    setProgressText("Aanmaken property…");
+    setProgressText("Creating property…");
+    setPercent(0);
 
     try {
       const owner = auth?.currentUser || null;
 
-      // 1) Maak eerst een lege property-doc (status: draft)
+      // 1) Create draft property doc
       const propertiesCol = collection(db, "properties");
       const docRef = await addDoc(propertiesCol, {
         title: title.trim(),
@@ -75,47 +99,39 @@ export default function UploadProperty() {
         photos: [],
       });
 
-      // 2) Upload alle foto’s naar Storage en verzamel URL’s
+      // 2) Upload photos via Cloud Function (server-side to Storage)
       const uploadedPhotos = [];
-      const total = files.length;
-
-      for (let i = 0; i < total; i++) {
-        const file = files[i];
-        setProgressText(`Uploaden foto ${i + 1} van ${total}…`);
-
-        const filename = safeName(file.name);
-        const storageRef = ref(
-          storage,
-          `properties/${docRef.id}/photos/${filename}`
-        );
-
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-
-        uploadedPhotos.push({
-          name: file.name,
-          path: storageRef.fullPath,
-          url,
-          size: file.size,
-          type: file.type,
-          uploadedAt: new Date().toISOString(),
-        });
+      const list = Array.from(files);
+      for (let i = 0; i < list.length; i++) {
+        const f = list[i];
+        setProgressText(`Uploading photo ${i + 1} of ${list.length}…`);
+        setPercent(Math.round(((i) / list.length) * 100));
+        try {
+          const meta = await uploadViaFunction(docRef.id, f);
+          uploadedPhotos.push(meta);
+        } catch (err) {
+          console.error("Upload failed:", err);
+          alert(`Upload failed for ${f.name}: ${err.message}`);
+          setSubmitting(false);
+          setProgressText("");
+          return;
+        }
       }
+      setPercent(100);
 
-      // 3) Update de property met photos[] en status
-      setProgressText("Bijwerken property…");
+      // 3) Finalize property
+      setProgressText("Saving property…");
       await updateDoc(docRef, {
         photos: uploadedPhotos,
         status: "uploaded",
         updatedAt: serverTimestamp(),
       });
 
-      // 4) Redirect naar PropertyView
-      // We gaan uit van route: /property/:id
+      // 4) Redirect to Property View
       navigate(`/property/${docRef.id}`);
     } catch (err) {
       console.error(err);
-      alert("Er ging iets mis bij het uploaden. Check de console voor details.");
+      alert("Something went wrong while uploading. Check the console for details.");
       setSubmitting(false);
       setProgressText("");
     }
@@ -123,17 +139,17 @@ export default function UploadProperty() {
 
   return (
     <div className="container" style={{ maxWidth: 840, margin: "0 auto", padding: "24px" }}>
-      <h1 style={{ fontSize: 28, marginBottom: 16 }}>Nieuwe property uploaden</h1>
+      <h1 style={{ fontSize: 28, marginBottom: 16 }}>Upload new property</h1>
 
       <form onSubmit={handleSubmit} className="card" style={{ padding: 16, borderRadius: 12 }}>
         <div className="form-row" style={{ marginBottom: 12 }}>
           <label htmlFor="title" style={{ display: "block", marginBottom: 6 }}>
-            Titel
+            Title
           </label>
           <input
             id="title"
             type="text"
-            placeholder="Bijv. Modern appartement aan het park"
+            placeholder="e.g., Modern apartment next to the park"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={submitting}
@@ -144,12 +160,12 @@ export default function UploadProperty() {
 
         <div className="form-row" style={{ marginBottom: 12 }}>
           <label htmlFor="location" style={{ display: "block", marginBottom: 6 }}>
-            Locatie
+            Location
           </label>
           <input
             id="location"
             type="text"
-            placeholder="Bijv. Rotterdam, NL"
+            placeholder="e.g., Rome, IT"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             disabled={submitting}
@@ -160,7 +176,7 @@ export default function UploadProperty() {
 
         <div className="form-row" style={{ marginBottom: 12 }}>
           <label htmlFor="photos" style={{ display: "block", marginBottom: 6 }}>
-            Foto’s (meerdere toegestaan)
+            Photos (you can select multiple)
           </label>
           <input
             id="photos"
@@ -172,14 +188,14 @@ export default function UploadProperty() {
             className="input"
           />
           <p style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
-            Tip: selecteer 3–10 scherpe interieur/exterieur foto’s.
+            Tip: select 3–10 sharp interior/exterior photos.
           </p>
         </div>
 
         {previews.length > 0 && (
           <div style={{ margin: "16px 0" }}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>
-              Voorbeeld ({previews.length})
+              Preview ({previews.length})
             </div>
             <div
               style={{
@@ -212,14 +228,8 @@ export default function UploadProperty() {
         )}
 
         {submitting && (
-          <div
-            style={{
-              margin: "12px 0",
-              fontSize: 14,
-              opacity: 0.9,
-            }}
-          >
-            {progressText || "Bezig…"}
+          <div style={{ margin: "12px 0", fontSize: 14, opacity: 0.95 }}>
+            {progressText} {percent ? `(${percent}%)` : null}
           </div>
         )}
 
@@ -235,20 +245,16 @@ export default function UploadProperty() {
               cursor: submitting ? "not-allowed" : "pointer",
             }}
           >
-            {submitting ? "Uploaden…" : "Opslaan & doorgaan"}
+            {submitting ? "Uploading…" : "Save & continue"}
           </button>
           <button
             type="button"
             onClick={() => navigate(-1)}
             disabled={submitting}
             className="button-secondary"
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              fontWeight: 600,
-            }}
+            style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 600 }}
           >
-            Annuleren
+            Cancel
           </button>
         </div>
       </form>

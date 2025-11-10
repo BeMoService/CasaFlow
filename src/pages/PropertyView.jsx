@@ -1,167 +1,218 @@
 // src/pages/PropertyView.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getApp } from "firebase/app";
+import { db } from "../firebase/config";
 import {
-  getFirestore,
   doc,
   getDoc,
   onSnapshot,
-  connectFirestoreEmulator,
+  collection,
+  where,
+  query,
 } from "firebase/firestore";
-import {
-  getStorage,
-  ref,
-  getDownloadURL,
-  connectStorageEmulator,
-} from "firebase/storage";
-import {
-  getFunctions,
-  httpsCallable,
-  connectFunctionsEmulator,
-} from "firebase/functions";
 
-// helper om 1x status te refreshen
-async function fetchGenOnce(db, id, storage, setGen, setImageUrls) {
-  if (!id) return;
-  const snap = await getDoc(doc(db, "ai_generations", id));
-  if (!snap.exists()) return;
-  const data = snap.data();
-  setGen({ id: snap.id, ...data });
-
-  if (Array.isArray(data.outputs) && data.outputs.length > 0) {
-    const urls = await Promise.all(
-      data.outputs.map(async (o) => {
-        try {
-          return await getDownloadURL(ref(storage, o.storagePath));
-        } catch {
-          return null;
-        }
-      })
-    );
-    setImageUrls(urls.filter(Boolean));
-  }
-}
+const FUNCTION_BASE = "https://europe-west1-velvetframedb.cloudfunctions.net";
 
 export default function PropertyView() {
   const { id } = useParams();
-  const [property, setProperty] = useState(null);
-  const [gen, setGen] = useState(null);
-  const [imageUrls, setImageUrls] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [prop, setProp] = useState(null);
+  const [gens, setGens] = useState([]);            // alle generations voor deze property
+  const [latest, setLatest] = useState(null);      // nieuwste generation (client-side bepaald)
+  const [triggering, setTriggering] = useState(false);
   const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
 
-  // firebase setup (emulator connect)
-  const app = getApp();
-  const db = getFirestore(app);
-  const storage = getStorage(app);
-  const functions = getFunctions(app, "europe-west1");
-
-  if (location.hostname === "localhost") {
-    try {
-      connectFirestoreEmulator(db, "localhost", 8080);
-      connectStorageEmulator(storage, "localhost", 9199);
-      connectFunctionsEmulator(functions, "localhost", 5001);
-    } catch (_) {}
-  }
-
-  // property ophalen
+  // Property laden
   useEffect(() => {
+    let active = true;
     (async () => {
-      const snap = await getDoc(doc(db, "properties", id));
-      if (snap.exists()) setProperty({ id: snap.id, ...snap.data() });
+      try {
+        const ref = doc(db, "properties", id);
+        const snap = await getDoc(ref);
+        if (active) setProp(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      } catch (e) {
+        console.error(e);
+        if (active) setError("Failed to load property.");
+      }
     })();
+    return () => { active = false; };
   }, [id]);
 
-  // generatiedoc live volgen
+  // Alle generations voor deze property volgen (zonder orderBy: we sorteren zelf)
   useEffect(() => {
-    if (!gen?.id) return;
-    const unsub = onSnapshot(doc(db, "ai_generations", gen.id), async (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
-      setGen({ id: snap.id, ...data });
-
-      if (data.status === "completed" && Array.isArray(data.outputs)) {
-        const urls = await Promise.all(
-          data.outputs.map(async (o) => {
-            try {
-              return await getDownloadURL(ref(storage, o.storagePath));
-            } catch {
-              return null;
-            }
-          })
-        );
-        setImageUrls(urls.filter(Boolean));
-      }
+    if (!id) return;
+    const q = query(collection(db, "ai_generations"), where("propertyId", "==", id));
+    const unsub = onSnapshot(q, (snap) => {
+      const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // sorteer nieuwste eerst op updatedAt/createdAt fallback
+      arr.sort((a, b) => {
+        const ta =
+          (a.updatedAt?.toMillis?.() || a.updatedAt?._seconds * 1000 || 0) ||
+          (a.createdAt?.toMillis?.() || a.createdAt?._seconds * 1000 || 0);
+        const tb =
+          (b.updatedAt?.toMillis?.() || b.updatedAt?._seconds * 1000 || 0) ||
+          (b.createdAt?.toMillis?.() || b.createdAt?._seconds * 1000 || 0);
+        return tb - ta;
+      });
+      setGens(arr);
+      setLatest(arr[0] || null);
+    }, (err) => {
+      console.error(err);
+      setError("Listening to generations failed.");
     });
     return () => unsub();
-  }, [gen?.id]);
+  }, [id]);
 
-  // knop handler
-  const startGeneration = async () => {
+  const photos = useMemo(
+    () => (Array.isArray(prop?.photos) ? prop.photos : []),
+    [prop]
+  );
+
+  async function handleGenerate() {
     setError("");
-    setLoading(true);
+    setMsg("");
+    setTriggering(true);
     try {
-      const fn = httpsCallable(functions, "createGenerationMock");
-      const res = await fn({ propertyId: id });
-      setGen({ id: res.data.generationId, status: "queued" });
-
-      // lichte polling-fallback
-      let ticks = 0;
-      const iv = setInterval(async () => {
-        ticks++;
-        await fetchGenOnce(db, res.data.generationId, storage, setGen, setImageUrls);
-        if (ticks >= 10) clearInterval(iv);
-      }, 2000);
+      const url = `${FUNCTION_BASE}/createGenerationMockHttp?propertyId=${encodeURIComponent(id)}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json().catch(() => ({}));
+      setMsg(data?.ok ? "Generation started." : "Requested generation.");
+      // onSnapshot pakt updates op; niets extra nodig
     } catch (e) {
-      setError(e.message);
+      console.error(e);
+      setError("Generating failed.");
     } finally {
-      setLoading(false);
+      setTriggering(false);
     }
-  };
+  }
 
   return (
-    <main style={{ padding: 20, color: "#fff", background: "#000", minHeight: "100vh" }}>
-      <h1>Property: {property?.title || id}</h1>
-      {property && <p>Locatie: {property.location}</p>}
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
+      <h1 style={{ fontSize: 28, marginBottom: 8 }}>
+        Property: {prop?.title || "(untitled)"}
+      </h1>
+      <div style={{ marginBottom: 16, opacity: 0.9 }}>
+        Location: {prop?.location || "—"}
+      </div>
 
-      <button disabled={loading} onClick={startGeneration}>
-        {loading ? "Bezig..." : "Generate Visual"}
-      </button>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {gen && (
-        <section style={{ marginTop: 20 }}>
-          <p>Status: <b>{gen.status}</b></p>
-          {gen.status === "processing" && <p>Mock draait... (10–20s)</p>}
-          {gen.status === "completed" && <p>Klaar ✅</p>}
-          <button
-            onClick={() =>
-              fetchGenOnce(db, gen.id, storage, setGen, setImageUrls)
-            }
-            style={{ marginTop: 10 }}
+      {photos.length > 0 && (
+        <>
+          <h3 style={{ marginTop: 8, marginBottom: 8 }}>Uploaded photos</h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: 12,
+              marginBottom: 24,
+            }}
           >
-            Refresh status
-          </button>
-        </section>
-      )}
-
-      {imageUrls.length > 0 && (
-        <section style={{ marginTop: 20 }}>
-          <h2>Outputs</h2>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            {imageUrls.map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                alt={`Output ${i + 1}`}
-                style={{ width: 200, borderRadius: 12, border: "1px solid #333" }}
-              />
+            {photos.map((p, i) => (
+              <div
+                key={(p.url || p.name || "") + i}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 10,
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={p.url}
+                  alt={p.name || `photo-${i}`}
+                  style={{ width: "100%", height: 140, objectFit: "cover" }}
+                />
+                <div style={{ padding: 8, fontSize: 12, opacity: 0.8 }}>
+                  {p.name || "photo"}
+                </div>
+              </div>
             ))}
           </div>
-        </section>
+        </>
       )}
-    </main>
+
+      <button
+        onClick={handleGenerate}
+        disabled={triggering}
+        className="button"
+        style={{
+          padding: "10px 16px",
+          borderRadius: 10,
+          fontWeight: 600,
+          marginBottom: 12,
+          cursor: triggering ? "not-allowed" : "pointer",
+        }}
+      >
+        {triggering ? "Generating…" : "Generate Visual"}
+      </button>
+
+      {msg && <div style={{ marginBottom: 8, opacity: 0.9 }}>{msg}</div>}
+      {error && <div style={{ marginBottom: 8, color: "#ff6b6b" }}>{error}</div>}
+
+      <div style={{ marginTop: 12 }}>
+        <h3 style={{ marginBottom: 8 }}>AI generations</h3>
+
+        {!latest ? (
+          <div style={{ opacity: 0.85 }}>No generations yet.</div>
+        ) : (
+          <div
+            style={{
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 12,
+              padding: 12,
+            }}
+          >
+            <div style={{ marginBottom: 8 }}>
+              Status:{" "}
+              <b
+                style={{
+                  color:
+                    latest.status === "done"
+                      ? "#5eea9a"
+                      : latest.status === "queued"
+                      ? "#ffd166"
+                      : "#a0a0a0",
+                }}
+              >
+                {latest.status}
+              </b>
+            </div>
+
+            {Array.isArray(latest.outputs) && latest.outputs.length > 0 ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                  gap: 12,
+                  marginTop: 8,
+                }}
+              >
+                {latest.outputs.map((url, i) => (
+                  <a
+                    key={url + i}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: "block",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 10,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
+                      src={url}
+                      alt={`generation-${i}`}
+                      style={{ width: "100%", height: 200, objectFit: "cover" }}
+                    />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div style={{ opacity: 0.85 }}>Waiting for outputs…</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
