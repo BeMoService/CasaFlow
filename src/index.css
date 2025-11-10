@@ -371,32 +371,90 @@
   object-fit: cover;
   background: #0c1116;
 }
-/* ===== CasaFlow CRM layout (Nexora L2) ===== */
-.app2-grid{display:grid;grid-template-columns:260px 1fr 320px;gap:16px;align-items:start}
-.app2-left{position:sticky;top:64px;height:calc(100vh - 80px)}
-.app2-top{grid-column:2/4;margin-bottom:8px}
-.app2-right{position:sticky;top:64px}
-.app2-main{grid-column:2/4}
+/* ===== CasaFlow CRM layout (Nexora L2) — GRID AREAS, STABLE ===== */
+.app2-grid{
+  display:grid;
+  grid-template-columns:260px 1fr 320px;
+  grid-template-rows:auto 1fr;
+  grid-template-areas:
+    "left top  top"
+    "left main right";
+  gap:16px;
+  align-items:start;
+  min-height:calc(100vh - 64px); /* onder de hoofdnav */
+  padding:0 8px;
+}
 
-/* breadcrumbs + links */
+/* Areas */
+.app2-left { grid-area:left; }
+.app2-top  { grid-area:top;  }
+.app2-main { grid-area:main; }
+.app2-right{ grid-area:right; }
+
+/* Sticky sidebars met eigen scroll, zodat niets overlapt */
+.app2-left,
+.app2-right{
+  position:sticky;
+  top:64px;                        /* hoogte hoofdnav */
+  max-height:calc(100vh - 80px);
+  overflow:auto;                   /* eigen scroll */
+  z-index:1;                       /* onder content-topbar */
+}
+
+/* Topbar over content, maar niet over de main breadcrumbs */
+.app2-top{
+  z-index:2;
+  margin-bottom:8px;
+}
+
+/* Breadcrumbs */
 .breadcrumbs{color:var(--muted);margin:8px 0 14px;user-select:none}
 .breadcrumbs .active{color:var(--text)}
 
+/* Sidebar navigation */
 .left-top .brand-mini a{font-weight:800;text-decoration:none;color:var(--text)}
 .left-nav{margin-top:6px}
-.navlink-underline{display:block;padding:10px 14px;border-radius:12px;border:1px solid var(--border);margin:4px 12px;color:var(--text);text-decoration:none;opacity:.95}
-.navlink-underline.active{border-color:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(0,0,0,.3);opacity:1}
+.navlink-underline{
+  display:block;
+  padding:10px 14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  margin:4px 12px;
+  color:var(--text);
+  text-decoration:none;
+  opacity:.95;
+}
+.navlink-underline.active{
+  border-color:rgba(255,255,255,.22);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 0 0 1px rgba(0,0,0,.3);
+  opacity:1;
+}
 
-/* media/skeleton helpers (safe if already present) */
+/* Media/skeleton helpers */
 .media{width:100%;height:200px;overflow:hidden;background:rgba(255,255,255,0.03)}
 .media img{width:100%;height:100%;object-fit:cover;display:block}
-.skeleton{background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.02),rgba(255,255,255,.06));animation:sheen 1.4s linear infinite}
+.skeleton{
+  background:linear-gradient(90deg,rgba(255,255,255,.06),rgba(255,255,255,.02),rgba(255,255,255,.06));
+  animation:sheen 1.4s linear infinite;
+}
 @keyframes sheen{0%{background-position:-200% 0}100%{background-position:200% 0}}
 
-/* Responsive */
+/* Responsive: op small screens stapelen; context onder main */
 @media (max-width: 1100px){
-  .app2-grid{grid-template-columns:1fr}
-  .app2-left,.app2-right{position:static;top:auto;height:auto}
-  .app2-top,.app2-main{grid-column:auto}
+  .app2-grid{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto;
+    grid-template-areas:
+      "top"
+      "main"
+      "right";
+  }
+  .app2-left{ display:none; }   /* linker sidebar weg op smal; kan ook inschuiven als je wilt */
+  .app2-right,
+  .app2-top{
+    position:static;
+    top:auto;
+    max-height:none;
+    overflow:visible;
+  }
 }
-  
