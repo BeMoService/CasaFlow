@@ -4,29 +4,18 @@
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-        ]
-      },
-      {
-        "source": "**/*.@(png|jpg|jpeg|gif|webp|svg)",
-        "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-        ]
-      }
+      { "source": "**/*.@(js|css)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] },
+      { "source": "**/*.@(png|jpg|jpeg|gif|webp|svg)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
     ],
-    "rewrites": [
-      { "source": "**", "destination": "/index.html" }
-    ]
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
   },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs22",
-    "region": "europe-west1"
-  },
-  "storage": {
-    "rules": "storage.rules"
-  }
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs22",
+      "regions": ["europe-west1"]
+    }
+  ],
+  "storage": { "rules": "storage.rules" }
 }
