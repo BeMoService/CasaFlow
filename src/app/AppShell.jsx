@@ -1,28 +1,26 @@
 // src/app/AppShell.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import AuthControls from "../components/AuthControls.jsx";
-import { useAuth } from "../AuthProvider.jsx";
-import { useCrm } from "../state/crmStore.js";
+import { useCrm } from "./state/crmStore.js";
+import { auth } from "../firebase/config.js";
+import { onAuthStateChanged } from "firebase/auth";
 
 /**
- * CRM App Shell
- * - Primair: left sidebar (main nav + counts)
- * - Secondary: right context panel (optional)
- * - Topbar: breadcrumbs/title/actions
- * - Mobile: collapsible drawer for primary nav
- *
- * NOTE: Only styling updated to use index.css tokens/utilities.
- *       All logic/structure preserved.
+ * CRM App Shell (Nexora-style)
+ * - Alleen styling aangepast; logica intact.
+ * - Auth: direct via Firebase (geen AuthProvider nodig).
  */
 
 export default function AppShell() {
-  const { user } = useAuth();
   const nav = useNavigate();
   const loc = useLocation();
-  const { counts } = useCrm(); // { leads, contacts, deals, inbox, tasks } (mock-ready)
+  const { counts } = useCrm(); // { leads, contacts, deals, inbox, tasks }
 
-  // simple breadcrumb from pathname
+  const [user, setUser] = useState(null);
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+
+  // breadcrumbs
   const crumbs = useMemo(() => {
     const parts = loc.pathname.replace(/^\/+/, "").split("/");
     const acc = [];
@@ -38,58 +36,33 @@ export default function AppShell() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      {/* Mobile drawer backdrop */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.45)",
-            zIndex: 50,
-          }}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 50 }}
         />
       )}
 
       {/* Primary Sidebar */}
       <aside
         className="sidebar"
-        style={{
-          height: "100%",
-          position: "relative",
-          zIndex: 55,
-          display: mobileOpen ? "block" : undefined,
-        }}
+        style={{ height: "100%", position: "relative", zIndex: 55, display: mobileOpen ? "block" : undefined }}
       >
         <div className="section" style={{ paddingTop: 18, paddingBottom: 10 }}>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <div className="row" style={{ gap: 10 }}>
-              <div
-                className="badge info"
-                title="CasaFlow CRM"
-                style={{ fontWeight: 600 }}
-              >
-                CRM
-              </div>
+              <div className="badge info" title="CasaFlow CRM" style={{ fontWeight: 600 }}>CRM</div>
               <div className="badge" title="Powered by Nexora">
                 <span style={{ width: 8, height: 8, borderRadius: 99, background: "var(--primary)" }} />
                 Nexora
               </div>
             </div>
-            <button
-              className="btn btn-ghost"
-              onClick={() => setMobileOpen(false)}
-              style={{ display: "none" }}
-              aria-label="Close menu"
-            >
-              ✕
-            </button>
+            <button className="btn btn-ghost" onClick={() => setMobileOpen(false)} style={{ display: "none" }} aria-label="Close menu">✕</button>
           </div>
         </div>
 
         <nav className="section" aria-label="Main">
           <div className="heading">Main</div>
-
           <NavItem to="/crm/overview" label="Overview" />
           <NavItem to="/crm/leads" label="Leads" count={counts?.leads} />
           <NavItem to="/crm/contacts" label="Contacts" count={counts?.contacts} />
@@ -104,9 +77,7 @@ export default function AppShell() {
         <div className="section" style={{ marginTop: "auto" }}>
           <div className="card" style={{ padding: 12 }}>
             <div className="label">Signed in</div>
-            <div style={{ fontSize: "var(--fs-sm)" }}>
-              {user?.email ?? "—"}
-            </div>
+            <div style={{ fontSize: "var(--fs-sm)" }}>{user?.email ?? "—"}</div>
             <div style={{ marginTop: 10 }}>
               <AuthControls compact />
             </div>
@@ -115,59 +86,41 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* Main content + secondary */}
+      {/* Main */}
       <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-        {/* Topbar */}
         <div className="topbar">
           <div className="between">
             <div className="row">
-              <button
-                className="btn btn-ghost"
-                onClick={() => setMobileOpen((v) => !v)}
-                aria-label="Toggle menu"
-                style={{ display: "none" }}
-              >
+              <button className="btn btn-ghost" onClick={() => setMobileOpen((v) => !v)} aria-label="Toggle menu" style={{ display: "none" }}>
                 ☰
               </button>
-
               <div className="breadcrumbs">
-                <NavLink to="/crm/overview" className="navlink-underline">
-                  CasaFlow CRM
-                </NavLink>
-                {crumbs.slice(1).map((c, i) => (
+                <NavLink to="/crm/overview" className="navlink-underline">CasaFlow CRM</NavLink>
+                {crumbs.slice(1).map((c) => (
                   <React.Fragment key={c.path}>
                     <span className="sep">/</span>
-                    <NavLink to={c.path} className="navlink-underline">
-                      {c.label}
-                    </NavLink>
+                    <NavLink to={c.path} className="navlink-underline">{c.label}</NavLink>
                   </React.Fragment>
                 ))}
               </div>
             </div>
 
             <div className="row">
-              <NavLink to="/dashboard" className="btn">
-                Back to App
-              </NavLink>
-              <button className="btn btn-primary" onClick={() => nav("/crm/leads")}>
-                New Lead
-              </button>
+              <NavLink to="/dashboard" className="btn">Back to App</NavLink>
+              <button className="btn btn-primary" onClick={() => nav("/crm/leads")}>New Lead</button>
             </div>
           </div>
         </div>
 
-        {/* Content */}
         <main className="content-wrap">
           <Outlet />
         </main>
       </div>
 
-      {/* Secondary/context sidebar (kept minimal; can host filters, details, etc.) */}
+      {/* Secondary */}
       <aside className="sidebar-2">
         <div className="h3" style={{ marginBottom: 8 }}>Context</div>
-        <div className="muted" style={{ marginBottom: 12 }}>
-          Quick actions & filters
-        </div>
+        <div className="muted" style={{ marginBottom: 12 }}>Quick actions & filters</div>
         <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
           <button className="btn">Filter</button>
           <button className="btn">Export</button>
@@ -188,24 +141,13 @@ export default function AppShell() {
 
 function NavItem({ to, label, count }) {
   return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        "item" + (isActive ? " active" : "")
-      }
-    >
+    <NavLink to={to} className={({ isActive }) => "item" + (isActive ? " active" : "")}>
       <span>{label}</span>
-      {typeof count === "number" ? (
-        <span className="badge">{count}</span>
-      ) : null}
+      {typeof count === "number" ? <span className="badge">{count}</span> : null}
     </NavLink>
   );
 }
 
 function toTitle(s) {
-  return s
-    .replace(/^\//, "")
-    .split("-")
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join(" ");
+  return s.replace(/^\//, "").split("-").map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
 }
