@@ -105,7 +105,7 @@ export default function UploadProperty() {
       for (let i = 0; i < list.length; i++) {
         const f = list[i];
         setProgressText(`Uploading photo ${i + 1} of ${list.length}…`);
-        setPercent(Math.round(((i) / list.length) * 100));
+        setPercent(Math.round((i / list.length) * 100));
         try {
           const meta = await uploadViaFunction(docRef.id, f);
           uploadedPhotos.push(meta);
@@ -138,12 +138,23 @@ export default function UploadProperty() {
   }
 
   return (
-    <div className="container" style={{ maxWidth: 840, margin: "0 auto", padding: "24px" }}>
-      <h1 style={{ fontSize: 28, marginBottom: 16 }}>Upload new property</h1>
+    <div className="container" style={{ maxWidth: 900, margin: "0 auto", padding: 24 }}>
+      <div className="between" style={{ marginBottom: 14 }}>
+        <h1 className="headline" style={{ fontSize: 28, margin: 0 }}>Upload new property</h1>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          disabled={submitting}
+          className="btn"
+          style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600 }}
+        >
+          Back
+        </button>
+      </div>
 
-      <form onSubmit={handleSubmit} className="card" style={{ padding: 16, borderRadius: 12 }}>
+      <form onSubmit={handleSubmit} className="card panel-outline" style={{ padding: 16, borderRadius: 12 }}>
         <div className="form-row" style={{ marginBottom: 12 }}>
-          <label htmlFor="title" style={{ display: "block", marginBottom: 6 }}>
+          <label htmlFor="title" className="label" style={{ display: "block", marginBottom: 6 }}>
             Title
           </label>
           <input
@@ -154,12 +165,19 @@ export default function UploadProperty() {
             onChange={(e) => setTitle(e.target.value)}
             disabled={submitting}
             className="input"
-            style={{ width: "100%", padding: "10px 12px" }}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid var(--border)",
+              background: "rgba(0,0,0,0.35)",
+              color: "var(--text)",
+            }}
           />
         </div>
 
         <div className="form-row" style={{ marginBottom: 12 }}>
-          <label htmlFor="location" style={{ display: "block", marginBottom: 6 }}>
+          <label htmlFor="location" className="label" style={{ display: "block", marginBottom: 6 }}>
             Location
           </label>
           <input
@@ -170,12 +188,19 @@ export default function UploadProperty() {
             onChange={(e) => setLocation(e.target.value)}
             disabled={submitting}
             className="input"
-            style={{ width: "100%", padding: "10px 12px" }}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              borderRadius: 12,
+              border: "1px solid var(--border)",
+              background: "rgba(0,0,0,0.35)",
+              color: "var(--text)",
+            }}
           />
         </div>
 
         <div className="form-row" style={{ marginBottom: 12 }}>
-          <label htmlFor="photos" style={{ display: "block", marginBottom: 6 }}>
+          <label htmlFor="photos" className="label" style={{ display: "block", marginBottom: 6 }}>
             Photos (you can select multiple)
           </label>
           <input
@@ -187,7 +212,7 @@ export default function UploadProperty() {
             disabled={submitting}
             className="input"
           />
-          <p style={{ fontSize: 12, opacity: 0.75, marginTop: 6 }}>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
             Tip: select 3–10 sharp interior/exterior photos.
           </p>
         </div>
@@ -207,18 +232,19 @@ export default function UploadProperty() {
               {previews.map((p) => (
                 <div
                   key={p.url}
+                  className="card"
                   style={{
                     borderRadius: 10,
                     overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    border: "1px solid var(--border)",
+                    background: "rgba(255,255,255,0.02)",
                   }}
                 >
-                  <img
-                    src={p.url}
-                    alt={p.name}
-                    style={{ width: "100%", height: 120, objectFit: "cover" }}
-                  />
-                  <div style={{ padding: 8, fontSize: 12, opacity: 0.85 }}>
+                  <div className="media">
+                    {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                    <img src={p.url} alt={p.name} loading="lazy" />
+                  </div>
+                  <div className="muted" style={{ padding: 8, fontSize: 12 }}>
                     {p.name}
                   </div>
                 </div>
@@ -228,22 +254,20 @@ export default function UploadProperty() {
         )}
 
         {submitting && (
-          <div style={{ margin: "12px 0", fontSize: 14, opacity: 0.95 }}>
-            {progressText} {percent ? `(${percent}%)` : null}
+          <div style={{ margin: "12px 0", display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="badge">Processing</span>
+            <span style={{ fontSize: 14, opacity: 0.95 }}>
+              {progressText} {percent ? `(${percent}%)` : null}
+            </span>
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+        <div className="row" style={{ marginTop: 8 }}>
           <button
             type="submit"
             disabled={submitting}
-            className="button"
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              fontWeight: 600,
-              cursor: submitting ? "not-allowed" : "pointer",
-            }}
+            className="btn btn-primary"
+            style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer" }}
           >
             {submitting ? "Uploading…" : "Save & continue"}
           </button>
@@ -251,8 +275,8 @@ export default function UploadProperty() {
             type="button"
             onClick={() => navigate(-1)}
             disabled={submitting}
-            className="button-secondary"
-            style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 600 }}
+            className="btn"
+            style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600 }}
           >
             Cancel
           </button>

@@ -1,8 +1,60 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db } from "../firebase/config";
+import { db, storage } from "../firebase/config";
 import { collection, onSnapshot } from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
+
+/* Inline image loader — geen extra bestand nodig */
+function InlineImage({ src, alt = "Property" }) {
+  const [state, setState] = useState({ url: null, error: false });
+
+  useEffect(() => {
+    let active = true;
+
+    async function resolve() {
+      try {
+        if (!src) { if (active) setState({ url: null, error: true }); return; }
+        const s = String(src);
+
+        if (/^https?:\/\//i.test(s)) { // al een directe URL
+          if (active) setState({ url: s, error: false });
+          return;
+        }
+
+        // gs://bucket/path of relatieve storage path
+        const clean = s.replace(/^gs:\/\/[^/]+\//, "");
+        const r = ref(storage, clean);
+        const dl = await getDownloadURL(r);
+        if (active) setState({ url: dl, error: false });
+      } catch (e) {
+        console.error("Dashboard InlineImage failed:", src, e);
+        if (active) setState({ url: null, error: true });
+      }
+    }
+
+    setState({ url: null, error: false });
+    resolve();
+    return () => { active = false; };
+  }, [src]);
+
+  if (!state.url && !state.error) return <div className="media skeleton" aria-label="loading image" />;
+
+  if (state.error) {
+    return (
+      <div className="media" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
+        No image
+      </div>
+    );
+  }
+
+  return (
+    <div className="media">
+      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+      <img src={state.url} alt={alt} loading="lazy" />
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -37,24 +89,12 @@ export default function Dashboard() {
 
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: 24 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <h1 style={{ fontSize: 28 }}>Dashboard</h1>
+      <div className="between">
+        <h1 className="headline" style={{ fontSize: 28, margin: 0 }}>Dashboard</h1>
         <button
           onClick={() => navigate("/upload")}
-          className="button"
-          style={{
-            padding: "10px 16px",
-            borderRadius: 10,
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
+          className="btn btn-primary"
+          style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600 }}
         >
           + New property
         </button>
@@ -64,22 +104,15 @@ export default function Dashboard() {
         <div style={{ marginTop: 16, opacity: 0.85 }}>Loading…</div>
       ) : sorted.length === 0 ? (
         <div style={{ marginTop: 24 }}>
-          <div
-            className="card"
-            style={{
-              borderRadius: 12,
-              padding: 20,
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
+          <div className="card panel-outline" style={{ borderRadius: 12, padding: 20 }}>
             <h3 style={{ margin: 0, marginBottom: 8 }}>No properties yet</h3>
-            <p style={{ marginTop: 0, opacity: 0.85 }}>
+            <p className="muted" style={{ marginTop: 0 }}>
               Click <b>New property</b> to start uploading.
             </p>
             <button
               onClick={() => navigate("/upload")}
-              className="button"
-              style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 600 }}
+              className="btn btn-primary"
+              style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600, marginTop: 8 }}
             >
               Upload property
             </button>
@@ -95,110 +128,56 @@ export default function Dashboard() {
           }}
         >
           {sorted.map((p) => {
-            const cover = (p?.photos && p.photos[0]?.url) || "";
+            // Dek meerdere vormen af: url | downloadURL | path | fullPath | gs://...
+            const first = Array.isArray(p?.photos) && p.photos.length ? p.photos[0] : null;
+            const cover =
+              (typeof first === "string" ? first : (
+                first?.downloadURL || first?.url || first?.href || first?.src || first?.storagePath || first?.fullPath || first?.path || ""
+              ));
+
             const photoCount = Array.isArray(p?.photos) ? p.photos.length : 0;
 
             return (
               <div
                 key={p.id}
-                className="card"
+                className="card panel-outline"
                 style={{
                   borderRadius: 12,
                   overflow: "hidden",
-                  border: "1px solid rgba(255,255,255,0.08)",
                   display: "flex",
                   flexDirection: "column",
                   background: "rgba(255,255,255,0.02)",
                 }}
               >
-                <div
-                  onClick={() => navigate(`/property/${p.id}`)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div
-                    style={{
-                      width: "100%",
-                      height: 160,
-                      background: "#111",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {cover ? (
-                      <img
-                        src={cover}
-                        alt={p.title || "Property"}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 12,
-                          opacity: 0.65,
-                        }}
-                      >
-                        No image
-                      </div>
-                    )}
-                  </div>
+                <div onClick={() => navigate(`/property/${p.id}`)} style={{ cursor: "pointer" }}>
+                  <InlineImage src={cover} alt={p.title || "Property"} />
                 </div>
 
                 <div style={{ padding: 12, display: "grid", gap: 8 }}>
-                  <div
-                    onClick={() => navigate(`/property/${p.id}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div style={{ fontWeight: 700 }}>
-                      {p.title || "Untitled"}
-                    </div>
-                    <div style={{ fontSize: 12, opacity: 0.8 }}>
-                      {p.location || "Unknown location"}
-                    </div>
+                  <div onClick={() => navigate(`/property/${p.id}`)} style={{ cursor: "pointer" }}>
+                    <div style={{ fontWeight: 700 }}>{p.title || "Untitled"}</div>
+                    <div className="muted" style={{ fontSize: 12 }}>{p.location || "Unknown location"}</div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        padding: "2px 8px",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        opacity: 0.9,
-                      }}
-                    >
-                      {p.status || "unknown"}
-                    </span>
-                    <span style={{ fontSize: 12, opacity: 0.8 }}>
+                  <div className="row">
+                    <span className="badge">{p.status || "unknown"}</span>
+                    <span className="muted" style={{ fontSize: 12 }}>
                       {photoCount} {photoCount === 1 ? "photo" : "photos"}
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <div className="row" style={{ marginTop: 4 }}>
                     <button
                       onClick={() => navigate(`/property/${p.id}`)}
-                      className="button"
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: 10,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
+                      className="btn btn-primary"
+                      style={{ borderRadius: 10, fontWeight: 600 }}
                     >
                       Open
                     </button>
                     <button
                       onClick={() => navigate(`/property/${p.id}`)}
-                      className="button-secondary"
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: 10,
-                        fontWeight: 600,
-                        opacity: 0.9,
-                      }}
+                      className="btn"
+                      style={{ borderRadius: 10, fontWeight: 600, opacity: 0.95 }}
                     >
                       Details
                     </button>

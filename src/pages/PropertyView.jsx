@@ -1,7 +1,7 @@
 // src/pages/PropertyView.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { db } from "../firebase/config";
+import { db, storage } from "../firebase/config";
 import {
   doc,
   getDoc,
@@ -10,8 +10,74 @@ import {
   where,
   query,
 } from "firebase/firestore";
+import { getDownloadURL, ref } from "firebase/storage";
 
 const FUNCTION_BASE = "https://europe-west1-velvetframedb.cloudfunctions.net";
+
+/* Inline image loader — geen extra bestand nodig */
+function InlineImage({ src, alt = "image" }) {
+  const [state, setState] = useState({ url: null, error: false });
+
+  useEffect(() => {
+    let active = true;
+    async function resolve() {
+      try {
+        if (!src) { if (active) setState({ url: null, error: true }); return; }
+        const s = String(src);
+
+        // directe URL
+        if (/^https?:\/\//i.test(s)) {
+          if (active) setState({ url: s, error: false });
+          return;
+        }
+        // gs://bucket/path of relatieve storage path
+        const clean = s.replace(/^gs:\/\/[^/]+\//, "");
+        const r = ref(storage, clean);
+        const dl = await getDownloadURL(r);
+        if (active) setState({ url: dl, error: false });
+      } catch (e) {
+        console.error("PropertyView InlineImage failed:", src, e);
+        if (active) setState({ url: null, error: true });
+      }
+    }
+    setState({ url: null, error: false });
+    resolve();
+    return () => { active = false; };
+  }, [src]);
+
+  if (!state.url && !state.error) return <div className="media skeleton" aria-label="loading image" />;
+
+  if (state.error) {
+    return (
+      <div className="media" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
+        No image
+      </div>
+    );
+  }
+
+  return (
+    <div className="media">
+      {/* eslint-disable-next-line jsx-a11y/alt-text */}
+      <img src={state.url} alt={alt} loading="lazy" />
+    </div>
+  );
+}
+
+// pak bruikbare URL/Pad uit output entry (string of object)
+function pickOutputSrc(entry) {
+  if (!entry) return "";
+  if (typeof entry === "string") return entry;
+  return (
+    entry.downloadURL ||
+    entry.url ||
+    entry.href ||
+    entry.src ||
+    entry.storagePath ||
+    entry.fullPath ||
+    entry.path ||
+    ""
+  );
+}
 
 export default function PropertyView() {
   const { id } = useParams();
@@ -27,8 +93,8 @@ export default function PropertyView() {
     let active = true;
     (async () => {
       try {
-        const ref = doc(db, "properties", id);
-        const snap = await getDoc(ref);
+        const refDoc = doc(db, "properties", id);
+        const snap = await getDoc(refDoc);
         if (active) setProp(snap.exists() ? { id: snap.id, ...snap.data() } : null);
       } catch (e) {
         console.error(e);
@@ -41,8 +107,8 @@ export default function PropertyView() {
   // Alle generations voor deze property volgen (zonder orderBy: we sorteren zelf)
   useEffect(() => {
     if (!id) return;
-    const q = query(collection(db, "ai_generations"), where("propertyId", "==", id));
-    const unsub = onSnapshot(q, (snap) => {
+    const qRef = query(collection(db, "ai_generations"), where("propertyId", "==", id));
+    const unsub = onSnapshot(qRef, (snap) => {
       const arr = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       // sorteer nieuwste eerst op updatedAt/createdAt fallback
       arr.sort((a, b) => {
@@ -78,7 +144,7 @@ export default function PropertyView() {
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json().catch(() => ({}));
       setMsg(data?.ok ? "Generation started." : "Requested generation.");
-      // onSnapshot pakt updates op; niets extra nodig
+      // onSnapshot pakt updates op
     } catch (e) {
       console.error(e);
       setError("Generating failed.");
@@ -89,16 +155,16 @@ export default function PropertyView() {
 
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      <h1 style={{ fontSize: 28, marginBottom: 8 }}>
-        Property: {prop?.title || "(untitled)"}
-      </h1>
-      <div style={{ marginBottom: 16, opacity: 0.9 }}>
-        Location: {prop?.location || "—"}
+      <div className="between" style={{ marginBottom: 12 }}>
+        <h1 className="headline" style={{ fontSize: 28, margin: 0 }}>
+          Property: {prop?.title || "(untitled)"}
+        </h1>
+        <div className="muted">Location: {prop?.location || "—"}</div>
       </div>
 
       {photos.length > 0 && (
         <>
-          <h3 style={{ marginTop: 8, marginBottom: 8 }}>Uploaded photos</h3>
+          <h3 className="headline" style={{ marginTop: 8, marginBottom: 8, fontSize: 20 }}>Uploaded photos</h3>
           <div
             style={{
               display: "grid",
@@ -107,74 +173,55 @@ export default function PropertyView() {
               marginBottom: 24,
             }}
           >
-            {photos.map((p, i) => (
-              <div
-                key={(p.url || p.name || "") + i}
-                style={{
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 10,
-                  overflow: "hidden",
-                }}
-              >
-                <img
-                  src={p.url}
-                  alt={p.name || `photo-${i}`}
-                  style={{ width: "100%", height: 140, objectFit: "cover" }}
-                />
-                <div style={{ padding: 8, fontSize: 12, opacity: 0.8 }}>
-                  {p.name || "photo"}
+            {photos.map((p, i) => {
+              const src =
+                (typeof p === "string" ? p :
+                  p.downloadURL || p.url || p.href || p.src || p.storagePath || p.fullPath || p.path || "");
+              return (
+                <div
+                  key={(p.url || p.name || "") + i}
+                  className="card"
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    background: "rgba(255,255,255,0.02)",
+                  }}
+                >
+                  <InlineImage src={src} alt={p.name || `photo-${i}`} />
+                  <div className="muted" style={{ padding: 8, fontSize: 12 }}>
+                    {p.name || "photo"}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
 
-      <button
-        onClick={handleGenerate}
-        disabled={triggering}
-        className="button"
-        style={{
-          padding: "10px 16px",
-          borderRadius: 10,
-          fontWeight: 600,
-          marginBottom: 12,
-          cursor: triggering ? "not-allowed" : "pointer",
-        }}
-      >
-        {triggering ? "Generating…" : "Generate Visual"}
-      </button>
-
-      {msg && <div style={{ marginBottom: 8, opacity: 0.9 }}>{msg}</div>}
-      {error && <div style={{ marginBottom: 8, color: "#ff6b6b" }}>{error}</div>}
+      <div className="row" style={{ marginBottom: 12 }}>
+        <button
+          onClick={handleGenerate}
+          disabled={triggering}
+          className="btn btn-primary"
+          style={{ padding: "10px 16px", borderRadius: 12, fontWeight: 600 }}
+        >
+          {triggering ? "Generating…" : "Generate Visual"}
+        </button>
+        {msg && <span className="badge">{msg}</span>}
+        {error && <span className="badge" style={{ borderColor: "rgba(255,0,0,0.35)" }}>Error</span>}
+      </div>
 
       <div style={{ marginTop: 12 }}>
-        <h3 style={{ marginBottom: 8 }}>AI generations</h3>
+        <h3 className="headline" style={{ marginBottom: 8, fontSize: 20 }}>AI generations</h3>
 
         {!latest ? (
-          <div style={{ opacity: 0.85 }}>No generations yet.</div>
+          <div className="muted">No generations yet.</div>
         ) : (
-          <div
-            style={{
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 12,
-              padding: 12,
-            }}
-          >
-            <div style={{ marginBottom: 8 }}>
-              Status:{" "}
-              <b
-                style={{
-                  color:
-                    latest.status === "done"
-                      ? "#5eea9a"
-                      : latest.status === "queued"
-                      ? "#ffd166"
-                      : "#a0a0a0",
-                }}
-              >
-                {latest.status}
-              </b>
+          <div className="card panel-outline" style={{ borderRadius: 12, padding: 12 }}>
+            <div className="row" style={{ marginBottom: 8 }}>
+              <span className="label">Status:</span>
+              <span className="badge">{latest.status || "unknown"}</span>
             </div>
 
             {Array.isArray(latest.outputs) && latest.outputs.length > 0 ? (
@@ -186,29 +233,29 @@ export default function PropertyView() {
                   marginTop: 8,
                 }}
               >
-                {latest.outputs.map((url, i) => (
-                  <a
-                    key={url + i}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: "block",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 10,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      src={url}
-                      alt={`generation-${i}`}
-                      style={{ width: "100%", height: 200, objectFit: "cover" }}
-                    />
-                  </a>
-                ))}
+                {latest.outputs.map((entry, i) => {
+                  const src = pickOutputSrc(entry);
+                  return (
+                    <a
+                      key={(typeof entry === "string" ? entry : src) + i}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: "block",
+                        border: "1px solid var(--border)",
+                        borderRadius: 12,
+                        overflow: "hidden",
+                        background: "rgba(255,255,255,0.02)",
+                      }}
+                    >
+                      <InlineImage src={src} alt={`generation-${i}`} />
+                    </a>
+                  );
+                })}
               </div>
             ) : (
-              <div style={{ opacity: 0.85 }}>Waiting for outputs…</div>
+              <div className="muted">Waiting for outputs…</div>
             )}
           </div>
         )}
