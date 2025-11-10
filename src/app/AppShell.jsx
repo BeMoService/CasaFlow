@@ -1,7 +1,7 @@
 // src/app/AppShell.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import AuthControls from "../../components/AuthControls.jsx";
+import AuthControls from "../components/AuthControls.jsx";
 import { auth } from "../firebase/config";
 import { onAuthStateChanged } from "firebase/auth";
 
