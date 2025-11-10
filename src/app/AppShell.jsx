@@ -1,7 +1,7 @@
 // src/app/AppShell.jsx
 import React, { useMemo, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import AuthControls from "../../components/AuthControls.jsx";
+import AuthControls from "../components/AuthControls.jsx";
 import { useAuth } from "../AuthProvider.jsx";
 import { useCrm } from "../state/crmStore.js";
 
