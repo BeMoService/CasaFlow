@@ -1,7 +1,8 @@
 // src/App.jsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router-dom";
 
+/* Core pages */
 import Dashboard from "./pages/Dashboard";
 import UploadProperty from "./pages/UploadProperty";
 import PropertyView from "./pages/PropertyView";
@@ -9,9 +10,6 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import PublicProperty from "./pages/PublicProperty";
 import RequireAuth from "./components/RequireAuth";
-
-import { auth } from "./firebase/config";
-import { onAuthStateChanged, signOut } from "firebase/auth";
 
 /* ===== CRM layer ===== */
 import AppShell from "./app/AppShell.jsx";
@@ -26,17 +24,21 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
+/* ===== Auth context (nieuw) ===== */
+import { AuthProvider, useAuth } from "./app/AuthProvider.jsx";
+
+/* ---------- Top navigation ---------- */
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+  const { user, signOut } = useAuth() ?? {};
 
   const item = (to, label) => {
     const active = loc.pathname.startsWith(to);
     return (
       <Link
         to={to}
+        className="navlink-underline"
         style={{
           padding: "8px 12px",
           borderRadius: 10,
@@ -52,8 +54,13 @@ function Nav() {
   };
 
   async function doLogout() {
-    try { await signOut(auth); navigate("/login", { replace: true }); }
-    catch (e) { console.error(e); alert("Sign out failed."); }
+    try {
+      await signOut?.();
+      navigate("/login", { replace: true });
+    } catch (e) {
+      console.error(e);
+      alert("Sign out failed.");
+    }
   }
 
   return (
@@ -70,10 +77,13 @@ function Nav() {
         {item("/dashboard", "Dashboard")}
         {item("/upload", "Upload")}
         {item("/admin", "Admin")}
-        {item("/crm", "CRM")}       {/* ✅ CRM link zichtbaar */}
+        {item("/crm", "CRM")}
         {!user ? item("/login", "Login") : (
-          <button onClick={doLogout} className="button-secondary"
-                  style={{ padding:"8px 12px", borderRadius:10, fontWeight:600 }}>
+          <button
+            onClick={doLogout}
+            className="btn"
+            style={{ padding:"8px 12px", borderRadius:10, fontWeight:600 }}
+          >
             Logout
           </button>
         )}
@@ -82,47 +92,52 @@ function Nav() {
   );
 }
 
+/* ---------- App with routes ---------- */
 export default function App() {
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff" }}>
-      <Nav />
-      <main style={{ padding: 16 }}>
-        <Routes>
-          <Route path="/" element={<RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>} />
-          {/* hoofdapp */}
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
-          <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
-          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-          {/* public */}
-          <Route path="/p/:id" element={<PublicProperty />} />
-          <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff" }}>
+        <Nav />
+        <main style={{ padding: 16 }}>
+          <Routes>
+            <Route path="/" element={<RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>} />
 
-          {/* ===== CRM shell + subroutes ===== */}
-          <Route
-            path="/crm/*"
-            element={
-              <RequireAuth>
-                <CrmProvider>
-                  <AppShell />
-                </CrmProvider>
-              </RequireAuth>
-            }
-          >
-            <Route index element={<CrmOverview />} />
-            <Route path="leads" element={<CrmLeads />} />
-            <Route path="contacts" element={<CrmContacts />} />
-            <Route path="deals" element={<CrmDeals />} />
-            <Route path="inbox" element={<CrmInbox />} />
-            <Route path="tasks" element={<CrmTasks />} />
-            <Route path="automations" element={<CrmAutomations />} />
-            <Route path="templates" element={<CrmTemplates />} />
-            <Route path="settings" element={<CrmSettings />} />
-          </Route>
+            {/* hoofdapp */}
+            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
+            <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
+            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </main>
-    </div>
+            {/* public */}
+            <Route path="/p/:id" element={<PublicProperty />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* ===== CRM shell + subroutes ===== */}
+            <Route
+              path="/crm/*"
+              element={
+                <RequireAuth>
+                  <CrmProvider>
+                    <AppShell />
+                  </CrmProvider>
+                </RequireAuth>
+              }
+            >
+              <Route index element={<CrmOverview />} />
+              <Route path="leads" element={<CrmLeads />} />
+              <Route path="contacts" element={<CrmContacts />} />
+              <Route path="deals" element={<CrmDeals />} />
+              <Route path="inbox" element={<CrmInbox />} />
+              <Route path="tasks" element={<CrmTasks />} />
+              <Route path="automations" element={<CrmAutomations />} />
+              <Route path="templates" element={<CrmTemplates />} />
+              <Route path="settings" element={<CrmSettings />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </AuthProvider>
   );
 }
