@@ -5,8 +5,8 @@ import { db, storage } from "../firebase/config";
 import { collection, onSnapshot } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 
-/* Inline image loader — geen extra bestand nodig */
-function InlineImage({ src, alt = "Property" }) {
+/* Inline image loader — met vaste hoogte */
+function InlineImage({ src, alt = "Property", height = 200 }) {
   const [state, setState] = useState({ url: null, error: false });
 
   useEffect(() => {
@@ -17,7 +17,7 @@ function InlineImage({ src, alt = "Property" }) {
         if (!src) { if (active) setState({ url: null, error: true }); return; }
         const s = String(src);
 
-        if (/^https?:\/\//i.test(s)) { // al een directe URL
+        if (/^https?:\/\//i.test(s)) { // directe URL
           if (active) setState({ url: s, error: false });
           return;
         }
@@ -38,20 +38,33 @@ function InlineImage({ src, alt = "Property" }) {
     return () => { active = false; };
   }, [src]);
 
-  if (!state.url && !state.error) return <div className="media skeleton" aria-label="loading image" />;
+  // Skeleton tijdens load
+  if (!state.url && !state.error) {
+    return <div className="media skeleton" style={{ height }} aria-label="loading image" />;
+  }
 
+  // Netjes fallback bij fout
   if (state.error) {
     return (
-      <div className="media" style={{ display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
+      <div
+        className="media"
+        style={{ height, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}
+      >
         No image
       </div>
     );
   }
 
+  // Consistente hoogte + object-fit cover
   return (
-    <div className="media">
+    <div className="media" style={{ height, overflow: "hidden" }}>
       {/* eslint-disable-next-line jsx-a11y/alt-text */}
-      <img src={state.url} alt={alt} loading="lazy" />
+      <img
+        src={state.url}
+        alt={alt}
+        loading="lazy"
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      />
     </div>
   );
 }
@@ -150,7 +163,7 @@ export default function Dashboard() {
                 }}
               >
                 <div onClick={() => navigate(`/property/${p.id}`)} style={{ cursor: "pointer" }}>
-                  <InlineImage src={cover} alt={p.title || "Property"} />
+                  <InlineImage src={cover} alt={p.title || "Property"} height={200} />
                 </div>
 
                 <div style={{ padding: 12, display: "grid", gap: 8 }}>
