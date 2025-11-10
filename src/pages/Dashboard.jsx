@@ -1,8 +1,8 @@
 // src/pages/Dashboard.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, storage } from "../firebase/config";
-import { collection, onSnapshot } from "firebase/firestore";
+import { db, storage, auth } from "../firebase/config";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
 
 /* Inline image loader — met vaste hoogte */
@@ -74,22 +74,45 @@ export default function Dashboard() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ ENIGE WIJZIGING: filter op ownerId == currentUser.uid
   useEffect(() => {
-    const colRef = collection(db, "properties");
-    const unsub = onSnapshot(
-      colRef,
-      (snap) => {
-        const rows = [];
-        snap.forEach((doc) => rows.push({ id: doc.id, ...doc.data() }));
-        setProperties(rows);
+    let stopAuth = () => {};
+    let unsub = () => {};
+    setLoading(true);
+
+    stopAuth = auth.onAuthStateChanged((u) => {
+      // detach vorige listener
+      if (typeof unsub === "function") unsub();
+
+      if (!u) {
+        setProperties([]);
         setLoading(false);
-      },
-      (err) => {
-        console.error(err);
-        setLoading(false);
+        return;
       }
-    );
-    return () => unsub();
+
+      const colRef = collection(db, "properties");
+      const qRef = query(colRef, where("ownerId", "==", u.uid));
+
+      unsub = onSnapshot(
+        qRef,
+        (snap) => {
+          const rows = [];
+          snap.forEach((doc) => rows.push({ id: doc.id, ...doc.data() }));
+          rows.sort((a, b) => (b?.createdAt?.seconds || 0) - (a?.createdAt?.seconds || 0));
+          setProperties(rows);
+          setLoading(false);
+        },
+        (err) => {
+          console.error(err);
+          setLoading(false);
+        }
+      );
+    });
+
+    return () => {
+      if (typeof unsub === "function") unsub();
+      if (typeof stopAuth === "function") stopAuth();
+    };
   }, []);
 
   const sorted = useMemo(() => {
