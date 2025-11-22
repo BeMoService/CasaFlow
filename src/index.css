@@ -268,10 +268,10 @@
   }
   .sidebar .item:hover { background: var(--surface-strong); border-color: var(--border); }
   .sidebar .item.active {
-    background:
-      linear-gradient(180deg, rgba(20,184,166,0.18), rgba(20,184,166,0.08));
-    border-color: rgba(20,184,166,0.35);
+    background: linear-gradient(180deg, rgba(255,77,77,0.20), rgba(255,77,77,0.08));
+    border-color: rgba(255,77,77,0.35);
   }
+  
   
   /* Secondary (context) sidebar */
   .sidebar-2 {
@@ -288,20 +288,32 @@
   }
   
   /* Nav underline style (for top-level) */
-  .navlink-underline {
-    position: relative;
-    text-decoration: none;
-  }
-  .navlink-underline::after {
-    content: "";
-    position: absolute;
-    left: 0; bottom: -2px;
-    height: 2px; width: 0%;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    transition: width .18s ease;
-  }
-  .navlink-underline:hover::after,
-  .navlink-underline.active::after { width: 100%; }
+.navlink-underline {
+  position: relative;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.navlink-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 2px;
+  width: 0%;
+  background: linear-gradient(90deg, #ff4d4d, #b30000); /* CasaFlow red */
+  border-radius: 2px;
+  transition: width .18s ease;
+}
+
+.navlink-underline:hover::after,
+.navlink-underline.active::after {
+  width: 100%;
+}
+
   
   /* Toast container (primitive) */
   .toast {
@@ -353,13 +365,13 @@
 
 /* Paneel met subtiele glow/outline (doet het element “uitsteken”) */
 .panel-outline {
-  border: 1px solid rgba(248,113,113,0.40); /* hoofd-rand (rood) */
+  border: 1px solid rgba(255,77,77,0.25);
   box-shadow:
-    0 0 0 1px rgba(248,113,113,0.22) inset,  /* inner glow */
-    0 8px 28px rgba(0,0,0,0.55),             /* depth shadow */
-    0 0 32px rgba(248,113,113,0.35);         /* outer neon */
-  border-radius: var(--r-md);
+    0 0 0 1px rgba(255,77,77,0.12) inset,
+    0 8px 24px rgba(0,0,0,0.35),
+    0 0 28px rgba(255,77,77,0.18);
 }
+
 
 
 /* Media container (consistente 16:9 + object-fit) */
