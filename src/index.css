@@ -342,19 +342,25 @@
   position: absolute;
   left: 0; bottom: 0;
   height: 2px; width: 84px;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
+  background: linear-gradient(
+    90deg,
+    rgba(248,113,113,0.95),
+    rgba(248,113,113,0.55)
+  );
   border-radius: 2px;
 }
 
+
 /* Paneel met subtiele glow/outline (doet het element “uitsteken”) */
 .panel-outline {
-  border: 1px solid rgba(20,184,166,0.25);
+  border: 1px solid rgba(248,113,113,0.40); /* hoofd-rand (rood) */
   box-shadow:
-    0 0 0 1px rgba(20,184,166,0.12) inset,
-    0 8px 24px rgba(0,0,0,0.35),
-    0 0 28px rgba(20,184,166,0.15);
+    0 0 0 1px rgba(248,113,113,0.22) inset,  /* inner glow */
+    0 8px 28px rgba(0,0,0,0.55),             /* depth shadow */
+    0 0 32px rgba(248,113,113,0.35);         /* outer neon */
   border-radius: var(--r-md);
 }
+
 
 /* Media container (consistente 16:9 + object-fit) */
 .media {
