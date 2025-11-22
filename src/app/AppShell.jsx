@@ -32,7 +32,13 @@ export default function AppShell() {
   return (
     <div
       className="app2-root"
-      style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "260px 1fr",
+        gap: 16,
+        alignItems: "flex-start",
+        padding: "16px 8px 24px",
+      }}
     >
       {/* Topbar */}
       <div
@@ -67,14 +73,22 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Sidebar — altijd statisch links */}
+      {/* Sidebar — enkel rode outline, geen extra card-layer */}
       <aside
-        className="card panel-outline"
-        style={{ padding: 12, alignSelf: "start" }}
+        className="panel-outline"
+        style={{
+          padding: 12,
+          borderRadius: 16,
+          alignSelf: "start",
+          background: "rgba(0,0,0,0.72)",
+        }}
       >
         <div
-          className="panel-outline"
-          style={{ padding: 8, borderRadius: 12, marginBottom: 10 }}
+          style={{
+            padding: 8,
+            borderRadius: 12,
+            marginBottom: 10,
+          }}
         >
           <div
             style={{
@@ -117,11 +131,8 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* Main */}
-      <section
-        className="card panel-outline"
-        style={{ padding: 12, minHeight: 480 }}
-      >
+      {/* Main — geen card/panel-outline wrapper meer, alleen page-cards zelf */}
+      <section style={{ minHeight: 480 }}>
         <Outlet />
       </section>
 
