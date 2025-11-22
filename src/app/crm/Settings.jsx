@@ -17,7 +17,10 @@ export default function SettingsPage() {
 
   function handleChange(e) {
     const { name, type, value, checked } = e.target;
-    setSettings(s => ({ ...s, [name]: type === "checkbox" ? checked : value }));
+    setSettings((s) => ({
+      ...s,
+      [name]: type === "checkbox" ? checked : value,
+    }));
     setSaved(false);
   }
 
@@ -28,36 +31,122 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="card glass" style={{ padding: 16, borderRadius: 12, maxWidth: 600 }}>
-      <h1 style={{ marginTop: 0 }}>Settings</h1>
-      <form onSubmit={handleSave} style={{ display: "grid", gap: 12 }}>
+    <div
+      className="card glass"
+      style={{
+        padding: 16,
+        borderRadius: 12,
+        maxWidth: 640,
+      }}
+    >
+      <header style={{ marginBottom: 12 }}>
+        <h1 style={{ marginTop: 0, marginBottom: 4 }}>Settings</h1>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            opacity: 0.8,
+          }}
+        >
+          Configure your CasaFlow CRM workspace. This is a mock UI — wiring to
+          Firestore comes later.
+        </p>
+      </header>
+
+      <form
+        onSubmit={handleSave}
+        style={{ display: "grid", gap: 12, marginTop: 8 }}
+      >
         <label style={lab}>
           Company name
-          <input name="companyName" value={settings.companyName} onChange={handleChange} style={inp} />
+          <input
+            name="companyName"
+            value={settings.companyName}
+            onChange={handleChange}
+            style={inp}
+          />
         </label>
+
         <label style={lab}>
           Default currency
-          <input name="defaultCurrency" value={settings.defaultCurrency} onChange={handleChange} style={inp} />
+          <input
+            name="defaultCurrency"
+            value={settings.defaultCurrency}
+            onChange={handleChange}
+            style={inp}
+          />
         </label>
+
         <label style={lab}>
           Theme
-          <select name="theme" value={settings.theme} onChange={handleChange} style={inp}>
+          <select
+            name="theme"
+            value={settings.theme}
+            onChange={handleChange}
+            style={inp}
+          >
             <option value="dark">Dark</option>
             <option value="light">Light</option>
           </select>
         </label>
-        <label style={{ ...lab, flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <input type="checkbox" name="notifications" checked={settings.notifications} onChange={handleChange} />
+
+        <label
+          style={{
+            ...lab,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <input
+            type="checkbox"
+            name="notifications"
+            checked={settings.notifications}
+            onChange={handleChange}
+          />
           Enable notifications
         </label>
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button className="btn">Save</button>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
+          {saved && (
+            <div
+              style={{
+                fontSize: 13,
+                padding: "6px 10px",
+                borderRadius: 999,
+                border: "1px solid rgba(34,197,94,0.7)",
+                background: "rgba(22,101,52,0.45)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                opacity: 0.95,
+              }}
+            >
+              <span>Saved</span>
+              <span>✔</span>
+            </div>
+          )}
+          <button className="btn" type="submit">
+            Save
+          </button>
         </div>
-        {saved && <div style={{ color: "#0f0", fontSize: 14 }}>Saved ✔</div>}
       </form>
     </div>
   );
 }
 
-const inp = { padding: "8px 10px", borderRadius: 8, background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.16)", color: "inherit" };
+const inp = {
+  padding: "8px 10px",
+  borderRadius: 8,
+  background: "rgba(255,255,255,.06)",
+  border: "1px solid rgba(255,255,255,.16)",
+  color: "inherit",
+};
 const lab = { display: "grid", gap: 6 };
