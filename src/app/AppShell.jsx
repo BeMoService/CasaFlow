@@ -1,7 +1,6 @@
 // src/app/AppShell.jsx
 import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import AuthControls from "../components/AuthControls.jsx";
 import { useCrm } from "./state/crmStore.js";
 
 export default function AppShell() {
@@ -40,7 +39,7 @@ export default function AppShell() {
         padding: "16px 8px 24px",
       }}
     >
-      {/* Topbar */}
+      {/* CRM sub-topbar (alleen label + breadcrumb, géén extra logout) */}
       <div
         className="app2-top"
         style={{
@@ -65,30 +64,35 @@ export default function AppShell() {
             / {pathname.replace(/^\/crm\/?/, "") || "overview"}
           </span>
         </div>
-        <div
-          className="app2-auth"
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
-          <AuthControls />
+
+        {/* Rechts gewoon een subtiele label, geen tweede Logout */}
+        <div className="muted" style={{ fontSize: 13 }}>
+          CasaFlow CRM workspace
         </div>
       </div>
 
-      {/* Sidebar — clean, geen card-achtergrond */}
+      {/* Sidebar links met rode outline, verder transparant */}
       <aside
-        className="app2-left"
+        className="panel-outline"
         style={{
-          padding: "4px 0",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
+          padding: 12,
+          borderRadius: 16,
+          alignSelf: "start",
+          background: "rgba(0,0,0,0.72)",
         }}
       >
-        <div style={{ padding: "0 14px" }}>
+        <div
+          style={{
+            padding: 8,
+            borderRadius: 12,
+            marginBottom: 10,
+          }}
+        >
           <div
             style={{
               fontSize: 12,
               opacity: 0.85,
-              marginBottom: 4,
+              marginBottom: 6,
             }}
           >
             CasaFlow CRM
@@ -96,7 +100,7 @@ export default function AppShell() {
           <div style={{ fontWeight: 700 }}>Navigation</div>
         </div>
 
-        <div style={{ display: "grid", gap: 6, paddingRight: 6 }}>
+        <div style={{ display: "grid", gap: 6 }}>
           <LinkItem to="/crm" label="Overview" />
           <LinkItem to="/crm/leads" label="Leads" badge={counts?.leads ?? 0} />
           <LinkItem
@@ -125,40 +129,10 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* Main — geen extra card-wrapper, pagina's regelen zelf hun cards */}
+      {/* Main: de pagina zelf regelt de kaarten; hier geen extra card-wrapper */}
       <section style={{ minHeight: 480 }}>
         <Outlet />
       </section>
-
-      {/* Scoped styling: rode glow-logout in CRM topbar */}
-      <style>{`
-        .app2-top button {
-          border-radius: 999px;
-          padding: 8px 16px;
-          border: 1px solid rgba(248,113,113,0.75);
-          background:
-            radial-gradient(circle at 0% 0%, rgba(248,113,113,0.55), transparent 55%),
-            rgba(15,15,18,0.96);
-          box-shadow:
-            0 0 18px rgba(248,113,113,0.45),
-            0 10px 30px rgba(0,0,0,0.85);
-          color: #fee2e2;
-          font-weight: 600;
-          transition: background .18s ease, border-color .18s ease, transform .08s ease;
-        }
-
-        .app2-top button:hover {
-          border-color: rgba(248,113,113,0.95);
-          background:
-            radial-gradient(circle at 0% 0%, rgba(248,113,113,0.75), transparent 60%),
-            rgba(24,7,7,1);
-          transform: translateY(-1px);
-        }
-
-        .app2-top button:active {
-          transform: translateY(0);
-        }
-      `}</style>
     </div>
   );
 }
