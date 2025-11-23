@@ -30,6 +30,7 @@ function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
@@ -46,28 +47,52 @@ function Nav() {
   };
 
   async function doLogout() {
-    try { await signOut(auth); navigate("/login", { replace: true }); }
-    catch (e) { console.error(e); alert("Sign out failed."); }
+    try {
+      await signOut(auth);
+      navigate("/login", { replace: true });
+    } catch (e) {
+      console.error(e);
+      alert("Sign out failed.");
+    }
   }
 
   return (
-    <header style={{
-      position:"sticky", top:0, zIndex:10, display:"flex", justifyContent:"space-between",
-      alignItems:"center", gap:12, padding:"12px 16px", background:"rgba(0,0,0,0.65)",
-      borderBottom:"1px solid rgba(255,255,255,0.08)", backdropFilter:"blur(8px)"
-    }}>
-      <Link to="/dashboard" style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}>
+    <header
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        background: "rgba(0,0,0,0.65)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <Link
+        to="/dashboard"
+        style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}
+      >
         CasaFlow
       </Link>
 
-      <nav style={{ display:"flex", gap:8, alignItems:"center" }}>
+      <nav style={{ display: "flex", gap: 8, alignItems: "center" }}>
         {item("/dashboard", "Dashboard")}
         {item("/upload", "Upload")}
         {item("/admin", "Admin")}
         {item("/crm", "CRM")}
-        {!user ? item("/login", "Login") : (
-          <button onClick={doLogout} className="button-secondary"
-                  style={{ padding:"8px 12px", borderRadius:10, fontWeight:600 }}>
+        {!user ? (
+          item("/login", "Login")
+        ) : (
+          <button
+            onClick={doLogout}
+            className="btn btn-logout"
+            aria-label="Sign out"
+            title="Sign out"
+          >
             Logout
           </button>
         )}
@@ -78,16 +103,52 @@ function Nav() {
 
 export default function App() {
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff" }}>
+    <div style={{ minHeight: "100vh" }}>
       <Nav />
       <main style={{ padding: 16 }}>
         <Routes>
-          <Route path="/" element={<RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>} />
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <Navigate to="/dashboard" replace />
+              </RequireAuth>
+            }
+          />
           {/* hoofdapp */}
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
-          <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
-          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/upload"
+            element={
+              <RequireAuth>
+                <UploadProperty />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/property/:id"
+            element={
+              <RequireAuth>
+                <PropertyView />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequireAuth>
+                <Admin />
+              </RequireAuth>
+            }
+          />
+
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
