@@ -90,8 +90,7 @@ function Nav() {
           <button
             onClick={doLogout}
             className="btn btn-logout"
-            aria-label="Sign out"
-            title="Sign out"
+            style={{ padding: "8px 16px" }}
           >
             Logout
           </button>
@@ -105,7 +104,6 @@ export default function App() {
   return (
     <div className="cf-root">
       <Nav />
-
       <main className="cf-main">
         <Routes>
           <Route
@@ -116,7 +114,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -150,7 +147,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
@@ -181,8 +177,8 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* CasaFlow badge rechtsonder (zoals Nexora logo) */}
-      <div className="cf-badge" aria-hidden="true" />
+      {/* CasaFlow badge rechtsonder (C-logo) */}
+      <div className="cf-badge" />
     </div>
   );
 }
