@@ -42,10 +42,10 @@ export default function Overview() {
               justifyContent: "flex-end",
             }}
           >
-            <NavLink to="/crm/leads" className="btn">
+            <NavLink to="/crm/leads" className="btn btn-primary">
               Open leads
             </NavLink>
-            <NavLink to="/crm/contacts" className="btn">
+            <NavLink to="/crm/contacts" className="btn btn-primary">
               Import contacts
             </NavLink>
             <NavLink
@@ -118,17 +118,20 @@ export default function Overview() {
           value={fmt(counts?.deals)}
           hint="Pipeline"
         />
-        <KpiCard
-          title="Inbox"
-          value={fmt(counts?.inbox)}
-          hint="Unseen"
-        />
+        <KpiCard title="Inbox" value={fmt(counts?.inbox)} hint="Unseen" />
       </section>
 
       {/* Quick links */}
       <section
         className="card panel-outline"
-        style={{ marginTop: 14, borderRadius: 16, padding: 16 }}
+        style={{
+          marginTop: 14,
+          borderRadius: 16,
+          padding: 16,
+          background:
+            "radial-gradient(circle at top left, rgba(248,113,113,0.18), transparent 55%) rgba(8,8,10,0.96)",
+          boxShadow: "0 18px 50px rgba(0,0,0,0.85)",
+        }}
       >
         <div
           style={{
@@ -171,7 +174,14 @@ export default function Overview() {
       {/* Recent activity */}
       <section
         className="card panel-outline"
-        style={{ marginTop: 14, borderRadius: 16, padding: 16 }}
+        style={{
+          marginTop: 14,
+          borderRadius: 16,
+          padding: 16,
+          background:
+            "radial-gradient(circle at top left, rgba(248,113,113,0.18), transparent 55%) rgba(8,8,10,0.96)",
+          boxShadow: "0 18px 50px rgba(0,0,0,0.85)",
+        }}
       >
         <div
           style={{
