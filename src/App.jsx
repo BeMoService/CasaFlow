@@ -1,6 +1,13 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import UploadProperty from "./pages/UploadProperty";
@@ -31,7 +38,9 @@ function Nav() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+  useEffect(() => {
+    return onAuthStateChanged(auth, (u) => setUser(u || null));
+  }, []);
 
   const item = (to, label) => {
     const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
@@ -74,7 +83,11 @@ function Nav() {
     >
       <Link
         to="/dashboard"
-        style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}
+        style={{
+          fontWeight: 800,
+          color: "inherit",
+          textDecoration: "none",
+        }}
       >
         CasaFlow
       </Link>
@@ -89,8 +102,8 @@ function Nav() {
         ) : (
           <button
             onClick={doLogout}
-            className="btn btn-logout"
-            style={{ padding: "8px 16px" }}
+            className="btn-logout"
+            style={{ padding: "8px 12px", borderRadius: 10 }}
           >
             Logout
           </button>
@@ -104,6 +117,7 @@ export default function App() {
   return (
     <div className="cf-root">
       <Nav />
+
       <main className="cf-main">
         <Routes>
           <Route
@@ -114,6 +128,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -147,11 +162,12 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM shell + subroutes ===== */}
+          {/* CRM shell + subroutes */}
           <Route
             path="/crm/*"
             element={
@@ -177,7 +193,7 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* CasaFlow badge rechtsonder (C-logo) */}
+      {/* mini-badge rechtsonder */}
       <div className="cf-badge" />
     </div>
   );
