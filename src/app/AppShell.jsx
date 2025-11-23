@@ -73,28 +73,22 @@ export default function AppShell() {
         </div>
       </div>
 
-      {/* Sidebar — enkel rode outline, geen extra card-layer */}
+      {/* Sidebar — clean, geen card-achtergrond */}
       <aside
-        className="panel-outline"
+        className="app2-left"
         style={{
-          padding: 12,
-          borderRadius: 16,
-          alignSelf: "start",
-          background: "rgba(0,0,0,0.72)",
+          padding: "4px 0",
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
         }}
       >
-        <div
-          style={{
-            padding: 8,
-            borderRadius: 12,
-            marginBottom: 10,
-          }}
-        >
+        <div style={{ padding: "0 14px" }}>
           <div
             style={{
               fontSize: 12,
               opacity: 0.85,
-              marginBottom: 6,
+              marginBottom: 4,
             }}
           >
             CasaFlow CRM
@@ -102,7 +96,7 @@ export default function AppShell() {
           <div style={{ fontWeight: 700 }}>Navigation</div>
         </div>
 
-        <div style={{ display: "grid", gap: 6 }}>
+        <div style={{ display: "grid", gap: 6, paddingRight: 6 }}>
           <LinkItem to="/crm" label="Overview" />
           <LinkItem to="/crm/leads" label="Leads" badge={counts?.leads ?? 0} />
           <LinkItem
@@ -131,7 +125,7 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* Main — geen card/panel-outline wrapper meer, alleen page-cards zelf */}
+      {/* Main — geen extra card-wrapper, pagina's regelen zelf hun cards */}
       <section style={{ minHeight: 480 }}>
         <Outlet />
       </section>
