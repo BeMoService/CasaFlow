@@ -497,3 +497,74 @@
 @media (min-width:0){
   .app2-left{ position: static !important; transform: none !important; opacity: 1 !important; width: auto !important; max-width: none !important; }
 }
+/* CasaFlow — red glow logout button (Nexora style) */
+.btn-logout {
+  border-radius: 999px;
+  border: 1px solid rgba(248,113,113,0.75);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(248,113,113,0.55), transparent 55%),
+    rgba(15,15,18,0.96);
+  box-shadow:
+    0 0 18px rgba(248,113,113,0.45),
+    0 10px 30px rgba(0,0,0,0.85);
+  color: #fee2e2;
+  font-weight: 600;
+  transition: background .18s ease, border-color .18s ease, transform .08s ease;
+}
+
+.btn-logout:hover {
+  border-color: rgba(248,113,113,0.95);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(248,113,113,0.75), transparent 60%),
+    rgba(24,7,7,1);
+  transform: translateY(-1px);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
+}
+/* Forceer ALLE sign-out knoppen rood */
+/* ===== CasaFlow global backdrop (Nexora-style) ===== */
+.cf-root {
+  min-height: 100vh;
+  color: var(--text);
+  /* grote C-achtergrond met rode glow */
+  background:
+    radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
+    radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.96), rgba(0,0,0,0.99)),
+    url("/casaflow-bg.jpg") center/cover no-repeat fixed;
+}
+
+/* main padding (was inline in App.jsx) */
+.cf-main {
+  padding: 16px;
+}
+
+/* ===== CasaFlow badge rechtsonder ===== */
+.cf-badge {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 70px;
+  height: 70px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 30% 0%, rgba(248,113,113,0.75), transparent 55%),
+    rgba(0,0,0,0.9);
+  box-shadow:
+    0 0 24px rgba(248,113,113,0.65),
+    0 18px 40px rgba(0,0,0,0.95);
+  overflow: hidden;
+  pointer-events: none; /* nooit klikbaar */
+  z-index: 30;
+}
+
+.cf-badge::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 18px;
+  background: url("/casaflow-badge.png") center/contain no-repeat;
+  opacity: 0.98;
+}

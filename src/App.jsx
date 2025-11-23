@@ -103,9 +103,10 @@ function Nav() {
 
 export default function App() {
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div className="cf-root">
       <Nav />
-      <main style={{ padding: 16 }}>
+
+      <main className="cf-main">
         <Routes>
           <Route
             path="/"
@@ -115,6 +116,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -178,6 +180,9 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+
+      {/* CasaFlow badge rechtsonder (zoals Nexora logo) */}
+      <div className="cf-badge" aria-hidden="true" />
     </div>
   );
 }
