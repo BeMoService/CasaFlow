@@ -32,10 +32,10 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="card glass"
+      className="card panel-outline cf-settings-card"
       style={{
-        padding: 16,
-        borderRadius: 12,
+        padding: 20,
+        borderRadius: 16,
         maxWidth: 640,
       }}
     >
@@ -133,11 +133,46 @@ export default function SettingsPage() {
               <span>✔</span>
             </div>
           )}
-          <button className="btn" type="submit">
+          <button className="btn cf-settings-save" type="submit">
             Save
           </button>
         </div>
       </form>
+
+      {/* Scoped styling voor de rode card + Save button */}
+      <style>{`
+        .cf-settings-card {
+          background:
+            radial-gradient(circle at top left, rgba(248,113,113,0.22), transparent 55%)
+            rgba(8,8,10,0.96);
+          box-shadow: 0 22px 60px rgba(0,0,0,0.9);
+        }
+
+        .cf-settings-save {
+          border-radius: 999px;
+          border: 1px solid rgba(248,113,113,0.75);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(248,113,113,0.55), transparent 55%),
+            rgba(15,15,18,0.96);
+          box-shadow:
+            0 0 18px rgba(248,113,113,0.45),
+            0 10px 30px rgba(0,0,0,0.85);
+          color: #fee2e2;
+          font-weight: 600;
+        }
+
+        .cf-settings-save:hover {
+          border-color: rgba(248,113,113,0.95);
+          background:
+            radial-gradient(circle at 0% 0%, rgba(248,113,113,0.75), transparent 60%),
+            rgba(24,7,7,1);
+          transform: translateY(-1px);
+        }
+
+        .cf-settings-save:active {
+          transform: translateY(0);
+        }
+      `}</style>
     </div>
   );
 }
