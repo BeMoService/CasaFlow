@@ -130,6 +130,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -168,15 +169,13 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM shell + subroutes ===== */}
+          {/* ===== CRM shell + subroutes (tijdelijk ZONDER RequireAuth) ===== */}
           <Route
             path="/crm/*"
             element={
-              <RequireAuth>
-                <CrmProvider>
-                  <AppShell />
-                </CrmProvider>
-              </RequireAuth>
+              <CrmProvider>
+                <AppShell />
+              </CrmProvider>
             }
           >
             <Route index element={<CrmOverview />} />
