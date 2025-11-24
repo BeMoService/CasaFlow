@@ -1,13 +1,6 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-  Link,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import UploadProperty from "./pages/UploadProperty";
@@ -33,14 +26,15 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
+/* ===== CasaFlow visuals ===== */
+import cfBg from "./assets/casaflow-bg.jpg";
+import cfBadge from "./assets/casaflow-badge.png";
+
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    return onAuthStateChanged(auth, (u) => setUser(u || null));
-  }, []);
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
     const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
@@ -83,11 +77,7 @@ function Nav() {
     >
       <Link
         to="/dashboard"
-        style={{
-          fontWeight: 800,
-          color: "inherit",
-          textDecoration: "none",
-        }}
+        style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}
       >
         CasaFlow
       </Link>
@@ -102,8 +92,8 @@ function Nav() {
         ) : (
           <button
             onClick={doLogout}
-            className="btn-logout"
-            style={{ padding: "8px 12px", borderRadius: 10 }}
+            className="btn btn-logout"
+            style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
           >
             Logout
           </button>
@@ -115,7 +105,23 @@ function Nav() {
 
 export default function App() {
   return (
-    <div className="cf-root">
+    <div
+      className="cf-root"
+      style={{
+        minHeight: "100vh",
+        color: "var(--text)",
+        backgroundImage: `
+          radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
+          radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
+          linear-gradient(180deg, rgba(0,0,0,0.96), rgba(0,0,0,0.99)),
+          url(${cfBg})
+        `,
+        backgroundSize: "auto, auto, auto, cover",
+        backgroundPosition: "85% -10%, -10% 100%, center, center",
+        backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
+        backgroundAttachment: "scroll, scroll, scroll, fixed",
+      }}
+    >
       <Nav />
 
       <main className="cf-main">
@@ -167,7 +173,7 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* CRM shell + subroutes */}
+          {/* ===== CRM shell + subroutes ===== */}
           <Route
             path="/crm/*"
             element={
@@ -193,8 +199,10 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* mini-badge rechtsonder */}
-      <div className="cf-badge" />
+      {/* CasaFlow badge rechtsonder */}
+      <div className="cf-badge">
+        <img src={cfBadge} alt="CasaFlow badge" />
+      </div>
     </div>
   );
 }
