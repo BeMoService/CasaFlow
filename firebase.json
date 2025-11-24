@@ -17,5 +17,6 @@
       "regions": ["europe-west1"]
     }
   ],
-  "storage": { "rules": "storage.rules" }
+  "storage": { "rules": "storage.rules" },
+  "firestore": { "rules": "firestore.rules" }
 }

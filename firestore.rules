@@ -2,6 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{db}/documents {
 
+    /* ===== Helpers ===== */
     function isSignedIn() { return request.auth != null; }
 
     function tokenRole() {
@@ -14,47 +15,108 @@ service cloud.firestore {
     }
 
     function userRole() {
-      return tokenRole() != null ? tokenRole() : docRole(request.auth.uid);
+      return tokenRole() != null ? tokenRole() : (isSignedIn() ? docRole(request.auth.uid) : null);
     }
 
     function isAdmin() { return userRole() == "admin"; }
     function isOwner(ownerId) { return isSignedIn() && request.auth.uid == ownerId; }
 
-    // users
+    /* Snelle helper om owner van een property op te halen */
+    function propertyOwner(propId) {
+      return get(/databases/$(database)/documents/properties/$(propId)).data.ownerId;
+    }
+
+    /* ===== users =====
+       - Gebruiker ziet eigen userdoc; admin ziet alles
+    */
     match /users/{uid} {
-      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow read:   if isAdmin() || (isSignedIn() && request.auth.uid == uid);
       allow create: if isSignedIn() && request.auth.uid == uid;
       allow update: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
       allow delete: if isAdmin();
     }
 
-    // properties
+    /* ===== properties =====
+       - Volledig afgeschermd op ownerId
+    */
     match /properties/{propId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+      // lezen (get/list) enkel admin of eigenaar
+      allow get, list: if isAdmin() || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+
+      // aanmaken: client moet ownerId op zichzelf zetten (Functions mogen Admin-SDK gebruiken)
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
-      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.ownerId));
+
+      // wijzigen/verwijderen: admin of eigenaar
+      allow update, delete: if isAdmin() || isOwner(resource.data.ownerId);
     }
 
-    // leads
+    /* ===== leads =====
+       - Create is ook toegestaan ZONDER login (public lead form),
+         mits een geldige propertyId en beperkte veldset.
+       - Lezen/bewerken alleen voor admin of de eigenaar van de gelinkte property.
+    */
     match /leads/{leadId} {
-      allow create: if isSignedIn();
-      allow read, update, delete: if isAdmin()
-        || (isSignedIn()
-            && exists(/databases/$(database)/documents/properties/$(resource.data.propertyId))
-            && get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid);
+      // Public create met veld-validatie
+      allow create: if
+        // property moet bestaan
+        (request.resource.data.propertyId is string) &&
+        exists(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)) &&
+
+        // beperk velden (voorkom dat client ownerId of andere gevoelige velden zet)
+        request.resource.data.keys().hasOnly([
+          "propertyId",
+          "contact",
+          "message",
+          "status",
+          "createdAt"
+        ]) &&
+
+        // contact subfields (optioneel aanwezig)
+        (
+          !(request.resource.data.contact is map) ||
+          (
+            request.resource.data.contact.keys().hasOnly(["name","email","phone"]) &&
+            ( !(request.resource.data.contact.name is string) || request.resource.data.contact.name.size() <= 120 ) &&
+            ( !(request.resource.data.contact.email is string) || request.resource.data.contact.email.size() <= 160 ) &&
+            ( !(request.resource.data.contact.phone is string) || request.resource.data.contact.phone.size() <= 40 )
+          )
+        ) &&
+
+        // message limiet
+        ( !(request.resource.data.message is string) || request.resource.data.message.size() <= 4000 );
+
+      // lezen/bewerken: admin of owner van de property
+      allow get, list, update, delete: if
+        isAdmin() ||
+        (
+          isSignedIn() &&
+          resource.data.propertyId is string &&
+          exists(/databases/$(database)/documents/properties/$(resource.data.propertyId)) &&
+          get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid
+        );
     }
 
-    // ai_generations
+    /* ===== ai_generations =====
+       - Clients lezen alleen eigen generations (via propertyId-check).
+       - Aanmaken gebeurt normaliter via Cloud Function (Admin SDK); onderstaande create-rule
+         staat creation door ingelogde client toe ALS die eigenaar is van de property.
+    */
     match /ai_generations/{genId} {
-      allow create: if isSignedIn()
-        && exists(/databases/$(database)/documents/properties/$(request.resource.data.propertyId))
-        && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.ownerId == request.auth.uid;
+      // create door client alleen als eigenaar van gekoppelde property
+      allow create: if isSignedIn() &&
+        (request.resource.data.propertyId is string) &&
+        exists(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)) &&
+        get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.ownerId == request.auth.uid;
 
-      allow read, update, delete: if isAdmin()
-        || (isSignedIn()
-            && exists(/databases/$(database)/documents/properties/$(resource.data.propertyId))
-            && get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid);
+      // lezen/bijwerken/verwijderen: admin of eigenaar (via property)
+      allow get, list, update, delete: if
+        isAdmin() ||
+        (
+          isSignedIn() &&
+          resource.data.propertyId is string &&
+          exists(/databases/$(database)/documents/properties/$(resource.data.propertyId)) &&
+          get(/databases/$(database)/documents/properties/$(resource.data.propertyId)).data.ownerId == request.auth.uid
+        );
     }
   }
 }

@@ -30,6 +30,7 @@ function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
@@ -89,7 +90,7 @@ function Nav() {
           <button
             onClick={doLogout}
             className="btn-logout"
-            style={{ padding: "8px 12px", fontWeight: 600 }}
+            style={{ padding: "8px 16px" }}
           >
             Logout
           </button>
@@ -103,6 +104,8 @@ export default function App() {
   return (
     <div className="cf-root">
       <Nav />
+
+      {/* alles binnen de glow/background */}
       <main className="cf-main">
         <Routes>
           <Route
@@ -113,6 +116,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -146,6 +150,7 @@ export default function App() {
               </RequireAuth>
             }
           />
+
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
@@ -176,7 +181,7 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* CasaFlow badge rechtsonder */}
+      {/* mini-logo rechtsonder */}
       <div className="cf-badge" />
     </div>
   );

@@ -1,8 +1,32 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if true;
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    // Haal ownerId op van een property
+    function propertyOwner(propId) {
+      return get(/databases/(default)/documents/properties/$(propId)).data.ownerId;
+    }
+    // Haal ownerId op van een generation
+    function generationOwner(genId) {
+      return get(/databases/(default)/documents/ai_generations/$(genId)).data.ownerId;
+    }
+
+    // Bestandsindeling die we nu gebruiken:
+    // properties/{propertyId}/{filename}
+    // generations/{generationId}/{filename}
+    match /properties/{propertyId}/{fileName} {
+      allow read, write: if isSignedIn() && propertyOwner(propertyId) == request.auth.uid;
+    }
+
+    match /generations/{genId}/{fileName} {
+      allow read, write: if isSignedIn() && generationOwner(genId) == request.auth.uid;
+    }
+
+    // (optioneel) alle andere paden blokkeren
+    match /{path=**} {
+      allow read, write: if false;
     }
   }
 }

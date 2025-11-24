@@ -1,138 +1,98 @@
-// src/app/AppShell.jsx
+// src/components/AuthControls.jsx
 import React from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useCrm } from "./state/crmStore.js";
+import { useAuth } from "../app/AuthProvider.jsx";
 
-export default function AppShell() {
-  const { pathname } = useLocation();
-  const { counts } = useCrm();
+/**
+ * AuthControls
+ * - Logout = rode glow button (CasaFlow/Nexora style)
+ * - Login = standaard teal primary
+ */
+export default function AuthControls({ compact = false }) {
+  const auth = safeUseAuth();
+  const { user, signInWithGoogle, signOut } = auth;
 
-  const LinkItem = ({ to, label, badge }) => (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        "navlink-underline" + (isActive ? " active" : "")
-      }
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-      }}
-    >
-      <span>{label}</span>
-      {typeof badge === "number" ? (
-        <span className="badge" style={{ marginLeft: 10 }}>
-          {badge}
-        </span>
-      ) : null}
-    </NavLink>
-  );
+  const Wrap = "div";
+  const gapStyle = compact
+    ? { display: "flex", gap: 8, alignItems: "center" }
+    : { display: "flex", gap: 10, alignItems: "center" };
+
+  const logoutStyle = {
+    borderRadius: 999,
+    padding: "8px 16px",
+    border: "1px solid rgba(248,113,113,0.75)",
+    background:
+      "radial-gradient(circle at 0% 0%, rgba(248,113,113,0.55), transparent 55%), rgba(15,15,18,0.96)",
+    boxShadow:
+      "0 0 18px rgba(248,113,113,0.45), 0 10px 30px rgba(0,0,0,0.85)",
+    color: "#fee2e2",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition:
+      "background .18s ease, border-color .18s ease, transform .08s ease, box-shadow .12s ease",
+  };
+
+  const logoutHover = {
+    borderColor: "rgba(248,113,113,0.95)",
+    background:
+      "radial-gradient(circle at 0% 0%, rgba(248,113,113,0.75), transparent 60%), rgba(24,7,7,1)",
+    transform: "translateY(-1px)",
+    boxShadow:
+      "0 0 24px rgba(248,113,113,0.65), 0 14px 40px rgba(0,0,0,0.9)",
+  };
 
   return (
-    <div
-      className="app2-root"
-      style={{
-        display: "grid",
-        gridTemplateColumns: "260px 1fr",
-        gap: 16,
-        alignItems: "flex-start",
-        padding: "16px 8px 24px",
-      }}
-    >
-      {/* CRM sub-topbar (alleen label + breadcrumb, géén extra logout) */}
-      <div
-        className="app2-top"
-        style={{
-          gridColumn: "1 / -1",
-          position: "sticky",
-          top: 0,
-          zIndex: 12,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "12px 16px",
-          background: "rgba(0,0,0,0.55)",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 12,
-          backdropFilter: "blur(8px)",
-          marginBottom: 4,
-        }}
-      >
-        <div style={{ fontWeight: 800 }}>
-          CRM
-          <span className="muted" style={{ marginLeft: 8, fontWeight: 500 }}>
-            / {pathname.replace(/^\/crm\/?/, "") || "overview"}
-          </span>
-        </div>
-
-        {/* Rechts gewoon een subtiele label, geen tweede Logout */}
-        <div className="muted" style={{ fontSize: 13 }}>
-          CasaFlow CRM workspace
-        </div>
-      </div>
-
-      {/* Sidebar links met rode outline, verder transparant */}
-      <aside
-        className="panel-outline"
-        style={{
-          padding: 12,
-          borderRadius: 16,
-          alignSelf: "start",
-          background: "rgba(0,0,0,0.72)",
-        }}
-      >
-        <div
-          style={{
-            padding: 8,
-            borderRadius: 12,
-            marginBottom: 10,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 12,
-              opacity: 0.85,
-              marginBottom: 6,
+    <Wrap style={gapStyle}>
+      {user ? (
+        <>
+          {!compact && (
+            <div className="label" title={user.email || ""}>
+              {user.displayName || user.email || "Signed in"}
+            </div>
+          )}
+          <button
+            className="btn" // basis btn-styling + extra inline glow
+            onClick={() => signOut?.()}
+            aria-label="Sign out"
+            title="Sign out"
+            style={logoutStyle}
+            onMouseEnter={(e) => {
+              Object.assign(e.currentTarget.style, logoutHover);
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.currentTarget.style, logoutStyle);
             }}
           >
-            CasaFlow CRM
-          </div>
-          <div style={{ fontWeight: 700 }}>Navigation</div>
-        </div>
-
-        <div style={{ display: "grid", gap: 6 }}>
-          <LinkItem to="/crm" label="Overview" />
-          <LinkItem to="/crm/leads" label="Leads" badge={counts?.leads ?? 0} />
-          <LinkItem
-            to="/crm/contacts"
-            label="Contacts"
-            badge={counts?.contacts ?? 0}
-          />
-          <LinkItem
-            to="/crm/deals"
-            label="Deals"
-            badge={counts?.deals ?? 0}
-          />
-          <LinkItem
-            to="/crm/inbox"
-            label="Inbox"
-            badge={counts?.inbox ?? 0}
-          />
-          <LinkItem
-            to="/crm/tasks"
-            label="Tasks"
-            badge={counts?.tasks ?? 0}
-          />
-          <LinkItem to="/crm/automations" label="Automations" />
-          <LinkItem to="/crm/templates" label="Templates" />
-          <LinkItem to="/crm/settings" label="Settings" />
-        </div>
-      </aside>
-
-      {/* Main: de pagina zelf regelt de kaarten; hier geen extra card-wrapper */}
-      <section style={{ minHeight: 480 }}>
-        <Outlet />
-      </section>
-    </div>
+            Sign out
+          </button>
+        </>
+      ) : (
+        <button
+          className="btn btn-primary"
+          onClick={() => signInWithGoogle?.()}
+          aria-label="Sign in with Google"
+          title="Sign in with Google"
+        >
+          Sign in
+        </button>
+      )}
+    </Wrap>
   );
+}
+
+function safeUseAuth() {
+  try {
+    const ctx = useAuth();
+    return {
+      user: ctx?.user ?? null,
+      signInWithGoogle: ctx?.signInWithGoogle ?? (() => {}),
+      signOut: ctx?.signOut ?? (() => {}),
+    };
+  } catch {
+    // Fallback no-ops if AuthProvider isn’t mounted
+    return {
+      user: null,
+      signInWithGoogle: () => {},
+      signOut: () => {},
+    };
+  }
 }
