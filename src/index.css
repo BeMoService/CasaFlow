@@ -524,19 +524,19 @@
   transform: translateY(0);
 }
 /* ===== CasaFlow global backdrop (Nexora-style) ===== */
+/* ===== CasaFlow global backdrop (Nexora-style) ===== */
 .cf-root {
   min-height: 100vh;
   color: var(--text);
-  /* grote C-achtergrond met rode glow */
+
+  /* Volle CasaFlow-C als basis, met lichte rode glows erboven */
   background:
-    /* rode glows bovenop */
-    radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.55), transparent 60%),
-    radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.70), transparent 65%),
-    /* de echte CasaFlow-C */
+    radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.30), transparent 60%),
+    radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.38), transparent 60%),
     url("/casaflow-bg.jpg") center/cover no-repeat fixed,
-    /* fallback pure black */
-    #050608;
+    #02040a;
 }
+
 
 /* main padding (was inline in App.jsx) */
 .cf-main {
