@@ -26,10 +26,6 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
-/* ===== CasaFlow visuals ===== */
-import cfBg from "./assets/casaflow-bg.jpg";
-import cfBadge from "./assets/casaflow-badge.png";
-
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
@@ -92,8 +88,8 @@ function Nav() {
         ) : (
           <button
             onClick={doLogout}
-            className="btn btn-logout"
-            style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
+            className="btn-logout"
+            style={{ padding: "8px 12px", fontWeight: 600 }}
           >
             Logout
           </button>
@@ -105,25 +101,8 @@ function Nav() {
 
 export default function App() {
   return (
-    <div
-      className="cf-root"
-      style={{
-        minHeight: "100vh",
-        color: "var(--text)",
-        backgroundImage: `
-          radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
-          radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
-          linear-gradient(180deg, rgba(0,0,0,0.96), rgba(0,0,0,0.99)),
-          url(${cfBg})
-        `,
-        backgroundSize: "auto, auto, auto, cover",
-        backgroundPosition: "85% -10%, -10% 100%, center, center",
-        backgroundRepeat: "no-repeat, no-repeat, no-repeat, no-repeat",
-        backgroundAttachment: "scroll, scroll, scroll, fixed",
-      }}
-    >
+    <div className="cf-root">
       <Nav />
-
       <main className="cf-main">
         <Routes>
           <Route
@@ -134,7 +113,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -168,7 +146,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
@@ -200,9 +177,7 @@ export default function App() {
       </main>
 
       {/* CasaFlow badge rechtsonder */}
-      <div className="cf-badge">
-        <img src={cfBadge} alt="CasaFlow badge" />
-      </div>
+      <div className="cf-badge" />
     </div>
   );
 }

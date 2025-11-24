@@ -525,15 +525,18 @@
 }
 /* Forceer ALLE sign-out knoppen rood */
 /* ===== CasaFlow global backdrop (Nexora-style) ===== */
+/* ===== CasaFlow global backdrop container ===== */
+/* ===== CasaFlow global backdrop (Nexora-style) ===== */
 .cf-root {
   min-height: 100vh;
   color: var(--text);
-  /* grote C-achtergrond met rode glow */
+
+  /* Eerst de foto, daarna de glows eroverheen */
   background:
+    url("/casaflow-bg.jpg") center/cover no-repeat fixed,
     radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
     radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
-    linear-gradient(180deg, rgba(0,0,0,0.96), rgba(0,0,0,0.99)),
-    url("/casaflow-bg.jpg") center/cover no-repeat fixed;
+    linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.96));
 }
 
 /* main padding (was inline in App.jsx) */
@@ -542,12 +545,13 @@
 }
 
 /* ===== CasaFlow badge rechtsonder ===== */
+/* ===== CasaFlow badge rechtsonder ===== */
 .cf-badge {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  width: 70px;
-  height: 70px;
+  width: 72px;
+  height: 72px;
   border-radius: 22px;
   background:
     radial-gradient(circle at 30% 0%, rgba(248,113,113,0.75), transparent 55%),
@@ -556,7 +560,7 @@
     0 0 24px rgba(248,113,113,0.65),
     0 18px 40px rgba(0,0,0,0.95);
   overflow: hidden;
-  pointer-events: none; /* nooit klikbaar */
+  pointer-events: none;
   z-index: 30;
 }
 
@@ -566,5 +570,7 @@
   inset: 6px;
   border-radius: 18px;
   background: url("/casaflow-badge.png") center/contain no-repeat;
-  opacity: 0.98;
+  background-size: contain;
+  opacity: 1;
 }
+
