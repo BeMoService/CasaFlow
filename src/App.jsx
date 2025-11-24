@@ -26,11 +26,14 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
+/* ===== CasaFlow visuals (via Vite imports) ===== */
+import cfBg from "./assets/casaflow-bg.jpg";
+import cfBadge from "./assets/casaflow-badge.png";
+
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
@@ -90,7 +93,7 @@ function Nav() {
           <button
             onClick={doLogout}
             className="btn-logout"
-            style={{ padding: "8px 16px" }}
+            style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
           >
             Logout
           </button>
@@ -101,12 +104,22 @@ function Nav() {
 }
 
 export default function App() {
+  // Forceer hier de volledige achtergrond (gradients + image)
+  const rootStyle = {
+    minHeight: "100vh",
+    color: "#fff",
+    background:
+      `radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
+       radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
+       linear-gradient(180deg, rgba(0,0,0,0.96), rgba(0,0,0,0.99)),
+       url(${cfBg}) center/cover no-repeat fixed`,
+  };
+
   return (
-    <div className="cf-root">
+    <div className="cf-root" style={rootStyle}>
       <Nav />
 
-      {/* alles binnen de glow/background */}
-      <main className="cf-main">
+      <main className="cf-main" style={{ padding: 16 }}>
         <Routes>
           <Route
             path="/"
@@ -116,7 +129,6 @@ export default function App() {
               </RequireAuth>
             }
           />
-
           {/* hoofdapp */}
           <Route
             path="/dashboard"
@@ -181,8 +193,20 @@ export default function App() {
         </Routes>
       </main>
 
-      {/* mini-logo rechtsonder */}
-      <div className="cf-badge" />
+      {/* Badge rechtsonder met echte img i.p.v. CSS-url */}
+      <div className="cf-badge">
+        <img
+          src={cfBadge}
+          alt="CasaFlow badge"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            borderRadius: 18,
+            display: "block",
+          }}
+        />
+      </div>
     </div>
   );
 }
