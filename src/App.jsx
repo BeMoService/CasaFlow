@@ -101,7 +101,6 @@ function Nav() {
           <button
             onClick={doLogout}
             className="btn-logout"
-            // ⬇️ Dit brengt de oude vorm terug (niet super-rond)
             style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
           >
             Logout
@@ -124,6 +123,26 @@ export default function App() {
       #02040a
     `,
   };
+
+  // 🔧 Hard patch: verwijder vreemde "Sign in"-balk die van buitenaf wordt geïnjecteerd
+  useEffect(() => {
+    const removeWeirdSignIn = () => {
+      const main = document.querySelector("main.cf-main");
+      if (!main) return;
+
+      main.querySelectorAll("div").forEach((el) => {
+        const text = (el.textContent || "").trim();
+        if (text === "Sign in" && el.childElementCount === 0) {
+          el.remove();
+        }
+      });
+    };
+
+    // Direct én periodiek (voor het geval het async wordt geïnjecteerd)
+    removeWeirdSignIn();
+    const id = setInterval(removeWeirdSignIn, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="cf-root" style={rootStyle}>
