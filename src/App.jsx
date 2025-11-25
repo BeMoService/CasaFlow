@@ -1,6 +1,13 @@
 // src/App.jsx
 import React, { useEffect, useState } from "react";
-import { Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import UploadProperty from "./pages/UploadProperty";
@@ -13,7 +20,7 @@ import RequireAuth from "./components/RequireAuth";
 import { auth } from "./firebase/config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
-/* ===== CRM layer ===== */
+/* ===== CRM layer (nu even niet gebruikt in de test) ===== */
 import AppShell from "./app/AppShell.jsx";
 import { CrmProvider } from "./app/state/crmStore.js";
 import CrmOverview from "./app/crm/Overview.jsx";
@@ -34,6 +41,7 @@ function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+
   useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
@@ -169,25 +177,15 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM shell + subroutes (tijdelijk ZONDER RequireAuth) ===== */}
+          {/* ===== CRM shell + subroutes (PURE TEST) ===== */}
           <Route
             path="/crm/*"
             element={
-              <CrmProvider>
-                <AppShell />
-              </CrmProvider>
+              <div style={{ padding: 40, fontSize: 24 }}>
+                CRM ROUTE TEST
+              </div>
             }
-          >
-            <Route index element={<CrmOverview />} />
-            <Route path="leads" element={<CrmLeads />} />
-            <Route path="contacts" element={<CrmContacts />} />
-            <Route path="deals" element={<CrmDeals />} />
-            <Route path="inbox" element={<CrmInbox />} />
-            <Route path="tasks" element={<CrmTasks />} />
-            <Route path="automations" element={<CrmAutomations />} />
-            <Route path="templates" element={<CrmTemplates />} />
-            <Route path="settings" element={<CrmSettings />} />
-          </Route>
+          />
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
