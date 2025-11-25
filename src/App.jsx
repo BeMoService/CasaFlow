@@ -177,13 +177,32 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM (terug volledig werkend) ===== */}
+          {/* ===== CRM (wrapper + AppShell) ===== */}
           <Route
             path="/crm/*"
             element={
               <RequireAuth>
                 <CrmProvider>
-                  <AppShell />
+                  <div
+                    style={{
+                      padding: 16,
+                      marginTop: 8,
+                      borderRadius: 16,
+                      background: "rgba(0,0,0,0.55)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 700,
+                        marginBottom: 12,
+                      }}
+                    >
+                      CasaFlow CRM
+                    </div>
+                    <AppShell />
+                  </div>
                 </CrmProvider>
               </RequireAuth>
             }
