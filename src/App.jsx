@@ -1,6 +1,12 @@
+// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
-  Routes, Route, Navigate, Link, useLocation, useNavigate
+  Routes,
+  Route,
+  Navigate,
+  Link,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
@@ -11,7 +17,10 @@ import Login from "./pages/Login";
 import PublicProperty from "./pages/PublicProperty";
 import RequireAuth from "./components/RequireAuth";
 
-// CRM
+import { auth } from "./firebase/config";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
+/* ===== CRM layer ===== */
 import AppShell from "./app/AppShell.jsx";
 import { CrmProvider } from "./app/state/crmStore.js";
 import CrmOverview from "./app/crm/Overview.jsx";
@@ -24,9 +33,7 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
-import { auth } from "./firebase/config";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-
+/* ===== CasaFlow visuals (via Vite imports) ===== */
 import cfBg from "./assets/casaflow-bg.jpg";
 import cfBadge from "./assets/casaflow-badge.png";
 
@@ -35,10 +42,7 @@ function Nav() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => setUser(u || null));
-    return () => unsub();
-  }, []);
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
     const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
@@ -66,24 +70,42 @@ function Nav() {
   return (
     <header
       style={{
-        position: "sticky", top: 0, zIndex: 10,
-        display: "flex", justifyContent: "space-between",
-        padding: "12px 16px", background: "rgba(0,0,0,0.65)",
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 16px",
+        background: "rgba(0,0,0,0.65)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        backdropFilter: "blur(8px)"
+        backdropFilter: "blur(8px)",
       }}
     >
-      <Link to="/dashboard" style={{ fontWeight: 800, textDecoration: "none" }}>
+      <Link
+        to="/dashboard"
+        style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}
+      >
         CasaFlow
       </Link>
 
-      <nav style={{ display: "flex", gap: 8 }}>
+      <nav style={{ display: "flex", gap: 8, alignItems: "center" }}>
         {item("/dashboard", "Dashboard")}
         {item("/upload", "Upload")}
         {item("/admin", "Admin")}
         {item("/crm", "CRM")}
-        {!user ? item("/login", "Login") : (
-          <button onClick={doLogout} className="btn-logout">Logout</button>
+        {!user ? (
+          item("/login", "Login")
+        ) : (
+          <button
+            onClick={doLogout}
+            className="btn-logout"
+            // ⬇️ Dit brengt de oude vorm terug (niet super-rond)
+            style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
+          >
+            Logout
+          </button>
         )}
       </nav>
     </header>
@@ -91,6 +113,7 @@ function Nav() {
 }
 
 export default function App() {
+  // Volledige achtergrond (gradients + image)
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -106,23 +129,56 @@ export default function App() {
     <div className="cf-root" style={rootStyle}>
       <Nav />
 
-      <main style={{ padding: 16 }}>
+      <main className="cf-main" style={{ padding: 16 }}>
         <Routes>
-          <Route path="/" element={
-            <RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>
-          } />
+          <Route
+            path="/"
+            element={
+              <RequireAuth>
+                <Navigate to="/dashboard" replace />
+              </RequireAuth>
+            }
+          />
 
-          {/* Protected */}
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
-          <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
-          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+          {/* hoofdapp */}
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/upload"
+            element={
+              <RequireAuth>
+                <UploadProperty />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/property/:id"
+            element={
+              <RequireAuth>
+                <PropertyView />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <RequireAuth>
+                <Admin />
+              </RequireAuth>
+            }
+          />
 
-          {/* Public */}
-          <Route path="/login" element={<Login />} />
+          {/* public */}
           <Route path="/p/:id" element={<PublicProperty />} />
+          <Route path="/login" element={<Login />} />
 
-          {/* CRM FIXED */}
+          {/* CRM-shell + subroutes (achter auth) */}
           <Route
             path="/crm/*"
             element={
@@ -148,9 +204,19 @@ export default function App() {
         </Routes>
       </main>
 
+      {/* Badge rechtsonder */}
       <div className="cf-badge">
-        <img src={cfBadge} alt="CasaFlow badge"
-          style={{ width: "100%", height: "100%", borderRadius: 18 }} />
+        <img
+          src={cfBadge}
+          alt="CasaFlow badge"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            borderRadius: 18,
+            display: "block",
+          }}
+        />
       </div>
     </div>
   );
