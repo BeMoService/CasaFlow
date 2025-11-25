@@ -1,12 +1,6 @@
-// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
-  Routes,
-  Route,
-  Navigate,
-  Link,
-  useLocation,
-  useNavigate,
+  Routes, Route, Navigate, Link, useLocation, useNavigate
 } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
@@ -17,10 +11,7 @@ import Login from "./pages/Login";
 import PublicProperty from "./pages/PublicProperty";
 import RequireAuth from "./components/RequireAuth";
 
-import { auth } from "./firebase/config";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-
-/* ===== CRM layer ===== */
+// CRM
 import AppShell from "./app/AppShell.jsx";
 import { CrmProvider } from "./app/state/crmStore.js";
 import CrmOverview from "./app/crm/Overview.jsx";
@@ -33,23 +24,24 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
-/* ===== CasaFlow visuals (via Vite imports) ===== */
+import { auth } from "./firebase/config";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
 import cfBg from "./assets/casaflow-bg.jpg";
 import cfBadge from "./assets/casaflow-badge.png";
 
-/* =====================
-   Top navigation
-   ===================== */
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => setUser(u || null));
+    return () => unsub();
+  }, []);
 
   const item = (to, label) => {
-    const active =
-      loc.pathname === to || loc.pathname.startsWith(to + "/");
+    const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
     return (
       <Link
         to={to}
@@ -74,95 +66,31 @@ function Nav() {
   return (
     <header
       style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 12,
-        padding: "12px 16px",
-        background: "rgba(0,0,0,0.65)",
+        position: "sticky", top: 0, zIndex: 10,
+        display: "flex", justifyContent: "space-between",
+        padding: "12px 16px", background: "rgba(0,0,0,0.65)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        backdropFilter: "blur(8px)",
+        backdropFilter: "blur(8px)"
       }}
     >
-      <Link
-        to="/dashboard"
-        style={{ fontWeight: 800, color: "inherit", textDecoration: "none" }}
-      >
+      <Link to="/dashboard" style={{ fontWeight: 800, textDecoration: "none" }}>
         CasaFlow
       </Link>
 
-      <nav style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <nav style={{ display: "flex", gap: 8 }}>
         {item("/dashboard", "Dashboard")}
         {item("/upload", "Upload")}
         {item("/admin", "Admin")}
         {item("/crm", "CRM")}
-        {!user ? (
-          item("/login", "Login")
-        ) : (
-          <button
-            onClick={doLogout}
-            className="btn-logout"
-            style={{ padding: "8px 12px", borderRadius: 10, fontWeight: 600 }}
-          >
-            Logout
-          </button>
+        {!user ? item("/login", "Login") : (
+          <button onClick={doLogout} className="btn-logout">Logout</button>
         )}
       </nav>
     </header>
   );
 }
 
-/* =====================
-   Authed area (alles achter login)
-   ===================== */
-
-function AuthedRoutes() {
-  return (
-    <Routes>
-      {/* default → dashboard */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-
-      {/* hoofdapp */}
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/upload" element={<UploadProperty />} />
-      <Route path="/property/:id" element={<PropertyView />} />
-      <Route path="/admin" element={<Admin />} />
-
-      {/* ===== CRM shell + nested routes ===== */}
-      <Route
-        path="/crm/*"
-        element={
-          <CrmProvider>
-            <AppShell />
-          </CrmProvider>
-        }
-      >
-        <Route index element={<CrmOverview />} />
-        <Route path="leads" element={<CrmLeads />} />
-        <Route path="contacts" element={<CrmContacts />} />
-        <Route path="deals" element={<CrmDeals />} />
-        <Route path="inbox" element={<CrmInbox />} />
-        <Route path="tasks" element={<CrmTasks />} />
-        <Route path="automations" element={<CrmAutomations />} />
-        <Route path="templates" element={<CrmTemplates />} />
-        <Route path="settings" element={<CrmSettings />} />
-      </Route>
-
-      {/* fallback binnen authed area */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
-  );
-}
-
-/* =====================
-   Root app
-   ===================== */
-
 export default function App() {
-  // Volledige backdrop (C-image + glows)
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -178,37 +106,51 @@ export default function App() {
     <div className="cf-root" style={rootStyle}>
       <Nav />
 
-      <main className="cf-main" style={{ padding: 16 }}>
+      <main style={{ padding: 16 }}>
         <Routes>
-          {/* Public routes */}
+          <Route path="/" element={
+            <RequireAuth><Navigate to="/dashboard" replace /></RequireAuth>
+          } />
+
+          {/* Protected */}
+          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="/upload" element={<RequireAuth><UploadProperty /></RequireAuth>} />
+          <Route path="/property/:id" element={<RequireAuth><PropertyView /></RequireAuth>} />
+          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+
+          {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/p/:id" element={<PublicProperty />} />
 
-          {/* Alles hierna vereist login */}
+          {/* CRM FIXED */}
           <Route
-            path="/*"
+            path="/crm/*"
             element={
               <RequireAuth>
-                <AuthedRoutes />
+                <CrmProvider>
+                  <AppShell />
+                </CrmProvider>
               </RequireAuth>
             }
-          />
+          >
+            <Route index element={<CrmOverview />} />
+            <Route path="leads" element={<CrmLeads />} />
+            <Route path="contacts" element={<CrmContacts />} />
+            <Route path="deals" element={<CrmDeals />} />
+            <Route path="inbox" element={<CrmInbox />} />
+            <Route path="tasks" element={<CrmTasks />} />
+            <Route path="automations" element={<CrmAutomations />} />
+            <Route path="templates" element={<CrmTemplates />} />
+            <Route path="settings" element={<CrmSettings />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
 
-      {/* Badge rechtsonder */}
       <div className="cf-badge">
-        <img
-          src={cfBadge}
-          alt="CasaFlow badge"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            borderRadius: 18,
-            display: "block",
-          }}
-        />
+        <img src={cfBadge} alt="CasaFlow badge"
+          style={{ width: "100%", height: "100%", borderRadius: 18 }} />
       </div>
     </div>
   );
