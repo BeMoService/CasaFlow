@@ -20,7 +20,7 @@ import RequireAuth from "./components/RequireAuth";
 import { auth } from "./firebase/config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
-/* ===== CRM layer (nu even niet gebruikt in de test) ===== */
+/* ===== CRM layer ===== */
 import AppShell from "./app/AppShell.jsx";
 import { CrmProvider } from "./app/state/crmStore.js";
 import CrmOverview from "./app/crm/Overview.jsx";
@@ -33,7 +33,7 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
-/* ===== CasaFlow visuals (via Vite imports) ===== */
+/* ===== CasaFlow visuals ===== */
 import cfBg from "./assets/casaflow-bg.jpg";
 import cfBadge from "./assets/casaflow-badge.png";
 
@@ -112,7 +112,6 @@ function Nav() {
 }
 
 export default function App() {
-  // Forceer hier de volledige achtergrond (gradients + image)
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -130,6 +129,7 @@ export default function App() {
 
       <main className="cf-main" style={{ padding: 16 }}>
         <Routes>
+          {/* Default redirect */}
           <Route
             path="/"
             element={
@@ -139,7 +139,7 @@ export default function App() {
             }
           />
 
-          {/* hoofdapp */}
+          {/* Hoofdapp */}
           <Route
             path="/dashboard"
             element={
@@ -173,25 +173,38 @@ export default function App() {
             }
           />
 
-          {/* public */}
+          {/* Public pages */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM shell + subroutes (PURE TEST) ===== */}
+          {/* ===== CRM (terug volledig werkend) ===== */}
           <Route
             path="/crm/*"
             element={
-              <div style={{ padding: 40, fontSize: 24 }}>
-                CRM ROUTE TEST
-              </div>
+              <RequireAuth>
+                <CrmProvider>
+                  <AppShell />
+                </CrmProvider>
+              </RequireAuth>
             }
-          />
+          >
+            <Route index element={<CrmOverview />} />
+            <Route path="leads" element={<CrmLeads />} />
+            <Route path="contacts" element={<CrmContacts />} />
+            <Route path="deals" element={<CrmDeals />} />
+            <Route path="inbox" element={<CrmInbox />} />
+            <Route path="tasks" element={<CrmTasks />} />
+            <Route path="automations" element={<CrmAutomations />} />
+            <Route path="templates" element={<CrmTemplates />} />
+            <Route path="settings" element={<CrmSettings />} />
+          </Route>
 
+          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
 
-      {/* Badge rechtsonder met echte img i.p.v. CSS-url */}
+      {/* Badge rechtsonder */}
       <div className="cf-badge">
         <img
           src={cfBadge}
