@@ -4,17 +4,11 @@ import { Navigate, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase/config";
 
-/**
- * Gebruik:
- * <RequireAuth><Dashboard /></RequireAuth>
- * - Als user niet ingelogd is → redirect naar /login (met return-to).
- */
 export default function RequireAuth({ children }) {
   const location = useLocation();
 
-  // Start meteen met de huidige Firebase-user als die al bekend is
-  const [user, setUser] = useState(() => auth.currentUser ?? undefined); 
-  // undefined = loading, null = geen user
+  // undefined = loading, null = geen user, object = ingelogd
+  const [user, setUser] = useState(undefined);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -23,20 +17,15 @@ export default function RequireAuth({ children }) {
     return () => unsub();
   }, []);
 
-  // Eén bron van waarheid: pak ofwel state, ofwel de actuele auth.currentUser
-  const resolvedUser = user ?? auth.currentUser ?? undefined;
-
-  // Nog aan het ophalen / initialiseren
-  if (resolvedUser === undefined) {
+  if (user === undefined) {
     return (
       <div style={{ padding: 24, opacity: 0.85 }}>
-        Bezig met verifiëren…
+        Loading…
       </div>
     );
   }
 
-  // Niet ingelogd → naar login met return-pad
-  if (!resolvedUser) {
+  if (!user) {
     return (
       <Navigate
         to="/login"
@@ -46,6 +35,5 @@ export default function RequireAuth({ children }) {
     );
   }
 
-  // Ingelogd → render de children gewoon
   return <>{children}</>;
 }
