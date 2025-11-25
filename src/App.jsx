@@ -37,20 +37,19 @@ import CrmSettings from "./app/crm/Settings.jsx";
 import cfBg from "./assets/casaflow-bg.jpg";
 import cfBadge from "./assets/casaflow-badge.png";
 
-/* ===========================
+/* =====================
    Top navigation
-   =========================== */
+   ===================== */
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    return onAuthStateChanged(auth, (u) => setUser(u || null));
-  }, []);
+  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
 
   const item = (to, label) => {
-    const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
+    const active =
+      loc.pathname === to || loc.pathname.startsWith(to + "/");
     return (
       <Link
         to={to}
@@ -116,11 +115,54 @@ function Nav() {
   );
 }
 
-/* ===========================
-   App root
-   =========================== */
+/* =====================
+   Authed area (alles achter login)
+   ===================== */
+
+function AuthedRoutes() {
+  return (
+    <Routes>
+      {/* default → dashboard */}
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
+      {/* hoofdapp */}
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/upload" element={<UploadProperty />} />
+      <Route path="/property/:id" element={<PropertyView />} />
+      <Route path="/admin" element={<Admin />} />
+
+      {/* ===== CRM shell + nested routes ===== */}
+      <Route
+        path="/crm/*"
+        element={
+          <CrmProvider>
+            <AppShell />
+          </CrmProvider>
+        }
+      >
+        <Route index element={<CrmOverview />} />
+        <Route path="leads" element={<CrmLeads />} />
+        <Route path="contacts" element={<CrmContacts />} />
+        <Route path="deals" element={<CrmDeals />} />
+        <Route path="inbox" element={<CrmInbox />} />
+        <Route path="tasks" element={<CrmTasks />} />
+        <Route path="automations" element={<CrmAutomations />} />
+        <Route path="templates" element={<CrmTemplates />} />
+        <Route path="settings" element={<CrmSettings />} />
+      </Route>
+
+      {/* fallback binnen authed area */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
+
+/* =====================
+   Root app
+   ===================== */
+
 export default function App() {
-  // CasaFlow backdrop + Nexora glow
+  // Volledige backdrop (C-image + glows)
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -138,78 +180,19 @@ export default function App() {
 
       <main className="cf-main" style={{ padding: 16 }}>
         <Routes>
-          {/* Default → dashboard (beschermd) */}
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <Navigate to="/dashboard" replace />
-              </RequireAuth>
-            }
-          />
-
-          {/* Hoofdapp (alleen ingelogd) */}
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/upload"
-            element={
-              <RequireAuth>
-                <UploadProperty />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/property/:id"
-            element={
-              <RequireAuth>
-                <PropertyView />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth>
-                <Admin />
-              </RequireAuth>
-            }
-          />
-
           {/* Public routes */}
-          <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/p/:id" element={<PublicProperty />} />
 
-          {/* ===== CRM shell + subroutes (beschermd) ===== */}
+          {/* Alles hierna vereist login */}
           <Route
-            path="/crm/*"
+            path="/*"
             element={
               <RequireAuth>
-                <CrmProvider>
-                  <AppShell />
-                </CrmProvider>
+                <AuthedRoutes />
               </RequireAuth>
             }
-          >
-            <Route index element={<CrmOverview />} />
-            <Route path="leads" element={<CrmLeads />} />
-            <Route path="contacts" element={<CrmContacts />} />
-            <Route path="deals" element={<CrmDeals />} />
-            <Route path="inbox" element={<CrmInbox />} />
-            <Route path="tasks" element={<CrmTasks />} />
-            <Route path="automations" element={<CrmAutomations />} />
-            <Route path="templates" element={<CrmTemplates />} />
-            <Route path="settings" element={<CrmSettings />} />
-          </Route>
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          />
         </Routes>
       </main>
 
