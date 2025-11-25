@@ -33,16 +33,21 @@ import CrmAutomations from "./app/crm/Automations.jsx";
 import CrmTemplates from "./app/crm/Templates.jsx";
 import CrmSettings from "./app/crm/Settings.jsx";
 
-/* ===== CasaFlow visuals ===== */
+/* ===== CasaFlow visuals (via Vite imports) ===== */
 import cfBg from "./assets/casaflow-bg.jpg";
 import cfBadge from "./assets/casaflow-badge.png";
 
+/* ===========================
+   Top navigation
+   =========================== */
 function Nav() {
   const loc = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  useEffect(() => onAuthStateChanged(auth, (u) => setUser(u || null)), []);
+  useEffect(() => {
+    return onAuthStateChanged(auth, (u) => setUser(u || null));
+  }, []);
 
   const item = (to, label) => {
     const active = loc.pathname === to || loc.pathname.startsWith(to + "/");
@@ -111,7 +116,11 @@ function Nav() {
   );
 }
 
+/* ===========================
+   App root
+   =========================== */
 export default function App() {
+  // CasaFlow backdrop + Nexora glow
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -129,7 +138,7 @@ export default function App() {
 
       <main className="cf-main" style={{ padding: 16 }}>
         <Routes>
-          {/* Default redirect */}
+          {/* Default → dashboard (beschermd) */}
           <Route
             path="/"
             element={
@@ -139,7 +148,7 @@ export default function App() {
             }
           />
 
-          {/* Hoofdapp */}
+          {/* Hoofdapp (alleen ingelogd) */}
           <Route
             path="/dashboard"
             element={
@@ -173,36 +182,17 @@ export default function App() {
             }
           />
 
-          {/* Public pages */}
+          {/* Public routes */}
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* ===== CRM (wrapper + AppShell) ===== */}
+          {/* ===== CRM shell + subroutes (beschermd) ===== */}
           <Route
             path="/crm/*"
             element={
               <RequireAuth>
                 <CrmProvider>
-                  <div
-                    style={{
-                      padding: 16,
-                      marginTop: 8,
-                      borderRadius: 16,
-                      background: "rgba(0,0,0,0.55)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 700,
-                        marginBottom: 12,
-                      }}
-                    >
-                      CasaFlow CRM
-                    </div>
-                    <AppShell />
-                  </div>
+                  <AppShell />
                 </CrmProvider>
               </RequireAuth>
             }
@@ -218,7 +208,7 @@ export default function App() {
             <Route path="settings" element={<CrmSettings />} />
           </Route>
 
-          {/* Catch-all */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
