@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
   Routes,
@@ -111,6 +112,7 @@ function Nav() {
 }
 
 export default function App() {
+  // Volledige achtergrond (gradients + image)
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
@@ -121,6 +123,15 @@ export default function App() {
       #02040a
     `,
   };
+
+  // Helper: zelfde pattern als "Overview werkte", maar nu met shell eromheen
+  const withCrmShell = (node) => (
+    <RequireAuth>
+      <CrmProvider>
+        <AppShell>{node}</AppShell>
+      </CrmProvider>
+    </RequireAuth>
+  );
 
   return (
     <div className="cf-root" style={rootStyle}>
@@ -175,21 +186,35 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-                   {/* TEMP: simpele CRM route met provider */}
-<Route
-  path="/crm"
-  element={
-    <CrmProvider>
-      <CrmOverview />
-    </CrmProvider>
-  }
-/>
+          {/* CRM-routes — zelfde auth-pattern als Overview, maar met AppShell */}
+          <Route path="/crm" element={withCrmShell(<CrmOverview />)} />
+          <Route path="/crm/leads" element={withCrmShell(<CrmLeads />)} />
+          <Route
+            path="/crm/contacts"
+            element={withCrmShell(<CrmContacts />)}
+          />
+          <Route path="/crm/deals" element={withCrmShell(<CrmDeals />)} />
+          <Route path="/crm/inbox" element={withCrmShell(<CrmInbox />)} />
+          <Route path="/crm/tasks" element={withCrmShell(<CrmTasks />)} />
+          <Route
+            path="/crm/automations"
+            element={withCrmShell(<CrmAutomations />)}
+          />
+          <Route
+            path="/crm/templates"
+            element={withCrmShell(<CrmTemplates />)}
+          />
+          <Route
+            path="/crm/settings"
+            element={withCrmShell(<CrmSettings />)}
+          />
 
-
+          {/* fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
 
+      {/* Badge rechtsonder */}
       <div className="cf-badge">
         <img
           src={cfBadge}
