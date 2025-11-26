@@ -1,13 +1,26 @@
 // src/components/AuthControls.jsx
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../app/AuthProvider.jsx";
 
 /**
  * AuthControls
  * - Logout = rode glow button (CasaFlow/Nexora style)
  * - Login = standaard teal primary
+ *
+ * LET OP:
+ * - Deze controls renderen alleen zichtbaar op de /login route.
+ *   Op alle andere routes (o.a. /crm) is de output null, zodat er
+ *   nooit een losse groene "Sign in" knop in beeld hangt.
  */
 export default function AuthControls({ compact = false }) {
+  const location = useLocation();
+
+  // 🔒 Alleen op de loginpagina iets tonen
+  if (location.pathname !== "/login") {
+    return null;
+  }
+
   const auth = safeUseAuth();
   const { user, signInWithGoogle, signOut } = auth;
 
@@ -50,7 +63,7 @@ export default function AuthControls({ compact = false }) {
             </div>
           )}
           <button
-            className="btn" // basis btn-styling + extra inline glow
+            className="btn"
             onClick={() => signOut?.()}
             aria-label="Sign out"
             title="Sign out"
