@@ -9,9 +9,7 @@ import { auth } from "../firebase/config";
  */
 export default function RequireAuth({ children }) {
   const location = useLocation();
-
-  // undefined = loading, null = geen user, object = ingelogd
-  const [user, setUser] = useState(undefined);
+  const [user, setUser] = useState(undefined); // undefined = loading
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -21,11 +19,7 @@ export default function RequireAuth({ children }) {
   }, []);
 
   if (user === undefined) {
-    return (
-      <div style={{ padding: 24, opacity: 0.85 }}>
-        Loading…
-      </div>
-    );
+    return <div style={{ padding: 24 }}>Loading…</div>;
   }
 
   if (!user) {

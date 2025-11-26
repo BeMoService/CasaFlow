@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useState } from "react";
 import {
   Routes,
@@ -176,26 +175,27 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* CRM-shell + subroutes (TIJDELIJK zonder RequireAuth) */}
-<Route
-  path="/crm/*"
-  element={
-    <CrmProvider>
-      <AppShell />
-    </CrmProvider>
-  }
->
-  <Route index element={<CrmOverview />} />
-  <Route path="leads" element={<CrmLeads />} />
-  <Route path="contacts" element={<CrmContacts />} />
-  <Route path="deals" element={<CrmDeals />} />
-  <Route path="inbox" element={<CrmInbox />} />
-  <Route path="tasks" element={<CrmTasks />} />
-  <Route path="automations" element={<CrmAutomations />} />
-  <Route path="templates" element={<CrmTemplates />} />
-  <Route path="settings" element={<CrmSettings />} />
-</Route>
-
+          {/* CRM-shell + subroutes (achter auth) */}
+          <Route
+            path="/crm/*"
+            element={
+              <RequireAuth>
+                <CrmProvider>
+                  <AppShell />
+                </CrmProvider>
+              </RequireAuth>
+            }
+          >
+            <Route index element={<CrmOverview />} />
+            <Route path="leads" element={<CrmLeads />} />
+            <Route path="contacts" element={<CrmContacts />} />
+            <Route path="deals" element={<CrmDeals />} />
+            <Route path="inbox" element={<CrmInbox />} />
+            <Route path="tasks" element={<CrmTasks />} />
+            <Route path="automations" element={<CrmAutomations />} />
+            <Route path="templates" element={<CrmTemplates />} />
+            <Route path="settings" element={<CrmSettings />} />
+          </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
