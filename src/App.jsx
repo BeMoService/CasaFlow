@@ -175,27 +175,16 @@ export default function App() {
           <Route path="/p/:id" element={<PublicProperty />} />
           <Route path="/login" element={<Login />} />
 
-          {/* CRM-shell + subroutes (achter auth) */}
-          <Route
-            path="/crm/*"
-            element={
-              <RequireAuth>
-                <CrmProvider>
-                  <AppShell />
-                </CrmProvider>
-              </RequireAuth>
-            }
-          >
-            <Route index element={<CrmOverview />} />
-            <Route path="leads" element={<CrmLeads />} />
-            <Route path="contacts" element={<CrmContacts />} />
-            <Route path="deals" element={<CrmDeals />} />
-            <Route path="inbox" element={<CrmInbox />} />
-            <Route path="tasks" element={<CrmTasks />} />
-            <Route path="automations" element={<CrmAutomations />} />
-            <Route path="templates" element={<CrmTemplates />} />
-            <Route path="settings" element={<CrmSettings />} />
-          </Route>
+                   {/* TEMP: simpele CRM route met provider */}
+<Route
+  path="/crm"
+  element={
+    <CrmProvider>
+      <CrmOverview />
+    </CrmProvider>
+  }
+/>
+
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

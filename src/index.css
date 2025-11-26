@@ -533,7 +533,8 @@
   background:
     radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.30), transparent 60%),
     radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.38), transparent 60%),
-    url("/casaflow-bg.jpg") center/cover no-repeat fixed,
+    url("./assets/casaflow-bg.jpg")
+ center/cover no-repeat fixed,
     #02040a;
 }
 
@@ -567,6 +568,12 @@
   position: absolute;
   inset: 6px;
   border-radius: 18px;
-  background: url("/casaflow-badge.png") center/contain no-repeat;
+  background: url("./assets/casaflow-badge.png")
+ center/contain no-repeat;
   opacity: 0.98;
+}
+/* Hard kill: oude Google sign-in knop nooit tonen */
+button.btn.btn-primary[aria-label="Sign in with Google"],
+button.btn.btn-primary[title="Sign in with Google"] {
+  display: none !important;
 }
