@@ -116,13 +116,17 @@ export default function App() {
   const rootStyle = {
     minHeight: "100vh",
     color: "#fff",
+    width: "100%",
+    maxWidth: "100vw",
+    overflowX: "hidden", // voorkomt horizontaal scrollen, desktop én mobiel
     background: `
-      url(${cfBg}) center/cover no-repeat fixed,
-      radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
-      radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
-      #02040a
-    `,
+        url(${cfBg}) center/cover no-repeat fixed,
+        radial-gradient(1200px 800px at 85% -10%, rgba(248,113,113,0.28), transparent 60%),
+        radial-gradient(900px 700px at -10% 100%, rgba(127,29,29,0.40), transparent 60%),
+        #02040a
+      `,
   };
+  
 
   // Helper: zelfde pattern als "Overview werkte", maar nu met shell eromheen
   const withCrmShell = (node) => (
