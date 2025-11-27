@@ -577,3 +577,18 @@ button.btn.btn-primary[aria-label="Sign in with Google"],
 button.btn.btn-primary[title="Sign in with Google"] {
   display: none !important;
 }
+/* --- Global: voorkom horizontaal scrollen --- */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Extra safety voor CasaFlow root op kleine schermen */
+@media (max-width: 768px) {
+  .cf-root,
+  .cf-main {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+}
