@@ -1,18 +1,16 @@
 // src/app/AppShell.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { useCrm } from "./state/crmStore.js";
 
 export default function AppShell({ children }) {
-  const { counts } = useCrm();
-
+  // Heel bewust: géén useCrm / context / counts meer.
   const items = [
     { to: "/crm", label: "Overview" },
-    { to: "/crm/leads", label: "Leads", badge: counts.leads },
-    { to: "/crm/contacts", label: "Contacts", badge: counts.contacts },
-    { to: "/crm/deals", label: "Deals", badge: counts.deals },
-    { to: "/crm/inbox", label: "Inbox", badge: counts.inbox },
-    { to: "/crm/tasks", label: "Tasks", badge: counts.tasks },
+    { to: "/crm/leads", label: "Leads" },
+    { to: "/crm/contacts", label: "Contacts" },
+    { to: "/crm/deals", label: "Deals" },
+    { to: "/crm/inbox", label: "Inbox" },
+    { to: "/crm/tasks", label: "Tasks" },
     { to: "/crm/automations", label: "Automations" },
     { to: "/crm/templates", label: "Templates" },
     { to: "/crm/settings", label: "Settings" },
@@ -20,7 +18,6 @@ export default function AppShell({ children }) {
 
   return (
     <>
-      {/* Alleen layout/CSS, geen extra logica */}
       <style>{`
         .cf-crm-shell {
           max-width: 1200px;
@@ -88,16 +85,6 @@ export default function AppShell({ children }) {
           font-weight: 500;
         }
 
-        .cf-crm-nav-item .cf-crm-badge {
-          min-width: 24px;
-          padding: 3px 7px;
-          border-radius: 999px;
-          font-size: 11px;
-          text-align: center;
-          background: rgba(15,23,42,0.9);
-          border: 1px solid rgba(148,163,184,0.8);
-        }
-
         .cf-crm-nav-item:hover {
           border-color: rgba(248,113,113,0.75);
           background: radial-gradient(circle at 0 0, rgba(248,113,113,0.15), rgba(15,15,18,0.96));
@@ -114,7 +101,7 @@ export default function AppShell({ children }) {
           min-width: 0;
         }
 
-        /* Mobile: sidebar boven, content eronder, geen horizontale swipe */
+        /* Mobile: sidebar boven, content eronder */
         @media (max-width: 900px) {
           .cf-crm-shell {
             flex-direction: column;
@@ -144,9 +131,6 @@ export default function AppShell({ children }) {
                 }
               >
                 <span className="cf-crm-label">{item.label}</span>
-                {typeof item.badge === "number" && (
-                  <span className="cf-crm-badge">{item.badge}</span>
-                )}
               </NavLink>
             ))}
           </div>
