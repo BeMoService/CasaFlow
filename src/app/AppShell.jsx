@@ -1,17 +1,10 @@
 // src/app/AppShell.jsx
-import React, { useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import React from "react";
+import { NavLink } from "react-router-dom";
 import { useCrm } from "./state/crmStore.js";
 
 export default function AppShell({ children }) {
   const { counts } = useCrm();
-  const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Sluit de drawer als je naar een andere CRM-pagina navigeert
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
 
   const items = [
     { to: "/crm", label: "Overview" },
@@ -27,9 +20,8 @@ export default function AppShell({ children }) {
 
   return (
     <>
-      {/* Kleine CSS-injectie puur voor CRM layout (desktop + mobile) */}
-      <style>
-        {`
+      {/* Alleen layout/CSS, geen extra logica */}
+      <style>{`
         .cf-crm-shell {
           max-width: 1200px;
           margin: 0 auto;
@@ -122,104 +114,21 @@ export default function AppShell({ children }) {
           min-width: 0;
         }
 
-        /* Mobile: hamburger + slide-in aside */
-        .cf-crm-mobile-toggle {
-          display: none;
-        }
-
-        .cf-crm-backdrop {
-          display: none;
-        }
-
+        /* Mobile: sidebar boven, content eronder, geen horizontale swipe */
         @media (max-width: 900px) {
           .cf-crm-shell {
-            position: relative;
-            display: block;
-          }
-
-          .cf-crm-main {
-            margin-top: 44px;
-          }
-
-          .cf-crm-mobile-toggle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            position: fixed;
-            left: 16px;
-            top: 70px;
-            z-index: 60;
-            padding: 7px 11px;
-            border-radius: 999px;
-            border: 1px solid rgba(248,113,113,0.6);
-            background: rgba(15,15,18,0.95);
-            box-shadow: 0 14px 40px rgba(0,0,0,0.85);
-            font-size: 13px;
-            color: #e5e7eb;
-            cursor: pointer;
-          }
-
-          .cf-crm-mobile-toggle span.cf-bars {
-            display: inline-block;
-            width: 14px;
-            height: 2px;
-            border-radius: 999px;
-            background: rgba(248,113,113,0.9);
-            box-shadow: 0 5px 0 rgba(248,113,113,0.9),
-                        0 -5px 0 rgba(248,113,113,0.9);
+            flex-direction: column;
+            padding-bottom: 40px;
           }
 
           .cf-crm-aside {
-            position: fixed;
-            top: 64px;
-            left: 0;
-            bottom: 0;
-            transform: translateX(-100%);
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            z-index: 50;
-          }
-
-          .cf-crm-aside.cf-open {
-            transform: translateX(0);
-          }
-
-          .cf-crm-backdrop {
-            display: block;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.55);
-            backdrop-filter: blur(3px);
-            z-index: 45;
+            width: 100%;
           }
         }
-      `}
-      </style>
+      `}</style>
 
       <div className="cf-crm-shell">
-        {/* Hamburger alleen zichtbaar op mobile */}
-        <button
-          type="button"
-          className="cf-crm-mobile-toggle"
-          onClick={() => setMobileOpen((v) => !v)}
-        >
-          <span className="cf-bars" />
-          <span>CRM menu</span>
-        </button>
-
-        {/* Backdrop (mobile) */}
-        {mobileOpen && (
-          <div
-            className="cf-crm-backdrop"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
-
-        <aside
-          className={
-            "cf-crm-aside" + (mobileOpen ? " cf-open" : "")
-          }
-        >
+        <aside className="cf-crm-aside">
           <div className="cf-crm-brand">CasaFlow CRM</div>
           <div className="cf-crm-sub">Powered by Nexora</div>
 
