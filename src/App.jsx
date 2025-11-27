@@ -214,6 +214,20 @@ export default function App() {
         </Routes>
       </main>
 
+      {/* Footer globaal onderaan alle pagina's */}
+      <footer
+        style={{
+          textAlign: "center",
+          padding: "10px 16px 18px",
+          fontSize: 12,
+          opacity: 0.85,
+        }}
+      >
+        © 2025 Nexora™ — A BeMo Service Company
+        <br />
+        KVK 96793171
+      </footer>
+
       {/* Badge rechtsonder */}
       <div className="cf-badge">
         <img
